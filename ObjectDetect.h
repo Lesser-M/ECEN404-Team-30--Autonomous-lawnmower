@@ -22,6 +22,8 @@
 
 #include "sensor_read.h"
 
+#include <stdio.h> // converts float to char 
+
 
 // Struct to hold readings reported by sensor
 // Value caltulated by sensor read function 
