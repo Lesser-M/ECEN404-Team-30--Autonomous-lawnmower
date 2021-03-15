@@ -94,28 +94,7 @@ int Read_Front_Array(struct Reading R1, struct Reading R2, struct Reading R3, st
    
      
 
-        // THIS PART WORKS 
-        
-//        while (!end)
-//        {
-//            if (GPIO_RC2_Get() == 1)
-//            {
-//                S1_Start = TMR3_CounterGet(); 
-//                while (!end)
-//                {
-//                      
-//                //start = true; 
-//               
-//            
-//            //DelayUs(10); 
-//                    if (GPIO_RC2_Get() == 0) 
-//                    {
-//                        S1_Finish = TMR3_CounterGet(); 
-//                        end = true; 
-//                    }
-//                }
-//            }
-//        }
+
         // used to control While loops to read start and end tmr values respecivly 
         int SenStart = 0; // counts number of sensors that have start tmr value 
         int SenFinish = 0; // counts # sensors that have end tmr value 
@@ -146,7 +125,22 @@ int Read_Front_Array(struct Reading R1, struct Reading R2, struct Reading R3, st
          * Proccess for end time is similar to start time, except we have SenFinish count 
          * and SXF bool to check if we already have a stop time for any sensor 
          */
-        while (!end)
+        int TmrLoopCheck = 0; // reads timer value on current itteration of loop 
+        int TmrLoopCheckL = 0; // holds timer value of last loop itteration 
+        int TMRLoops = 0; // counts the number of timer loops 
+        bool stuck = false; // tells us if we are stuck in an infinite loop 
+        /* the timer period is 40ms, all sensors should return echo pulse in less 
+         * than 40ms. But since the timer may be at any value when we start we may
+         * loop as much as once, and still be vaild. 
+         * IF we loop more then once, than we are stuck. 
+         * by comparing this itterations timer value to lasts we can see if the 
+         * timer has reset. if it has reset, we incriment TMRLoops. If TMR loops >= 2 
+         * we have not received a valid return from the sensors and break the loop 
+         * by using the stuck bool 
+         * If sensors fail we will not get the signals we are looking for below, 
+         * and are left in an infinite loop
+         */
+        while ((!end) & (!stuck))
         {
             if ((GPIO_RB10_Get() == 1)&(!S1S))
             {   // S1 
@@ -178,9 +172,27 @@ int Read_Front_Array(struct Reading R1, struct Reading R2, struct Reading R3, st
                 SenStart++; 
                 S5S = true; 
             }
+            // checks for infinite loops. see explanation above while loop 
+            TmrLoopCheck = TMR3_CounterGet(); 
+            if (TmrLoopCheck > TmrLoopCheckL)
+            {
+                TmrLoopCheckL = TmrLoopCheck; 
+            }
+            else { 
+                TMRLoops = TMRLoops + 1; 
+                TmrLoopCheckL = 0; 
+            }
+            if (TMRLoops >= 2)
+            {
+                stuck = true;
+                
+            }
             if(SenStart == 5) // we have start readings from all, can begin looking for ends 
-            {       
-                while (!end)
+            {  
+                TMRLoops = 0; 
+                TmrLoopCheckL = 0; 
+                stuck = false; 
+                while ((!end) & (!stuck))
                 {
                     if ((GPIO_RB10_Get() == 0)&(!S1F)) 
                     {   //S1
@@ -216,17 +228,86 @@ int Read_Front_Array(struct Reading R1, struct Reading R2, struct Reading R3, st
                     if (SenFinish == 5)
                     {   // we now have 5 end readings and can break loop 
                         end = true; 
+                    } 
+                    // including TMR loop check from initial while loop here also
+                    // incase we get stuck looking for the echo 
+                    TmrLoopCheck = TMR3_CounterGet(); 
+                    if (TmrLoopCheck > TmrLoopCheckL)
+                    {
+                        TmrLoopCheckL = TmrLoopCheck; 
+                    }
+                    else { 
+                        TMRLoops = TMRLoops + 1; 
+                        TmrLoopCheckL = 0; 
+                    }
+                    if (TMRLoops >= 2)
+                    {
+                        stuck = true;
+                
                     }    
                 }
             }
         }
-   
-        // timer ticks for ToF from sensors 
-        int dif_S1 = S1_Finish-S1_Start; // ToF for sensor 1 relative to timmer 3 
-        int dif_S2 = S2_Finish-S2_Start; // ToF for sensor 2 relative to timmer 3
-        int dif_S3 = S3_Finish-S3_Start; // ToF for sensor 3 relative to timmer 3
-        int dif_S4 = S4_Finish-S4_Start; // ToF for sensor 4 relative to timmer 3
-        int dif_S5 = S5_Finish-S5_Start; // ToF for sensor 5 relative to timmer 3
+        // SEE S1 BLOCK FOR EXPLANATION 
+        // also note: using if, elseif block, to ignore case where start and finish
+        // ticks are equal. TMR period is longer than max sensor read period, 
+        // hence Finish == Start can only be caused by error. 
+        // can introcude check here it this starts happending for some reasson 
+        // timer ticks for ToF from sensor1 
+        int dif_S1;
+        if (S1_Finish > S1_Start)
+        {   // normal case
+            dif_S1 = S1_Finish-S1_Start; // ToF for sensor 1 relative to timmer 3 
+        }
+        else if (S1_Finish < S1_Start)
+        {   // incase timer rolls over 
+            // 1562500 is max tmr value, subtracting start value from that, and 
+            // adding finish value, given start>finish 
+            // gives number of timer ticks 
+            dif_S1 = (1562500-S1_Start)+S1_Finish; 
+        }
+        // S2 TMR tick 
+        int dif_S2; 
+        if (S2_Finish > S2_Start)
+        {
+            dif_S2 = S2_Finish-S2_Start; 
+        }
+        else if (S2_Finish < S2_Start)
+        {
+            dif_S2 = (1562500 - S2_Start) + S2_Finish; 
+        }
+        // S3 TMR Ticks 
+        int dif_S3; 
+        if (S3_Finish > S3_Start)
+        {
+            dif_S3 = S3_Finish-S3_Start; 
+        }
+        else if (S3_Finish < S3_Start)
+        {
+            dif_S3 = (1562500 - S3_Start) + S3_Finish; 
+        }
+        // S4 TMR Ticks
+        int dif_S4; 
+        if (S4_Finish > S4_Start)
+        {
+            dif_S4 = S4_Finish-S4_Start; 
+        }
+        else if (S4_Finish < S4_Start)
+        {
+            dif_S4 = (1562500 - S4_Start) + S4_Finish; 
+        }
+        // S5 TMR Ticks 
+        int dif_S5; 
+        if (S5_Finish > S5_Start)
+        {
+            dif_S5 = S5_Finish-S5_Start; 
+        }
+        else if (S5_Finish < S5_Start)
+        {
+            dif_S5 = (1562500 - S5_Start) + S5_Finish; 
+        }
+            
+        
         
         // calculating distance from timer ticks, see function description for formula  
         float distance1 = (dif_S1)*0.01088; // ToF in ms * Vsound in M/s * (1/1000)[s/ms]*(100[cm/M])
@@ -234,8 +315,10 @@ int Read_Front_Array(struct Reading R1, struct Reading R2, struct Reading R3, st
         float distance3 = dif_S3 *0.01088; 
         float distance4 = dif_S4 * 0.01088; 
         float distance5 = dif_S5 * 0.01088; 
-        
-        if (distance1 <=400)
+        // we include the stuck variable from the sensor reading loops above 
+        // in the initial validation here 
+        // if the loop got stuck at any time, we want discard all meassuremnts 
+        if ((distance1 <=400)&(!stuck))
         {
             R1.dist = distance1; 
         }
@@ -243,7 +326,7 @@ int Read_Front_Array(struct Reading R1, struct Reading R2, struct Reading R3, st
         {
             R1.dist = 0.0; 
         }
-        if (distance2 <=400)
+        if ((distance2 <=400)&(!stuck))
         {
             R2.dist = distance2; 
         }
@@ -251,7 +334,7 @@ int Read_Front_Array(struct Reading R1, struct Reading R2, struct Reading R3, st
         {
             R2.dist = 0.0; 
         }
-        if (distance3 <=400)
+        if ((distance3 <=400) &(!stuck))
         {
             R3.dist = distance3; 
         }
@@ -259,7 +342,7 @@ int Read_Front_Array(struct Reading R1, struct Reading R2, struct Reading R3, st
         {
             R3.dist = 0.0; 
         }
-        if (distance4 <=400)
+        if ((distance4 <=400)&(!stuck))
         {
             R4.dist = distance4; 
         }
@@ -267,13 +350,20 @@ int Read_Front_Array(struct Reading R1, struct Reading R2, struct Reading R3, st
         {
             R4.dist = 0.0; 
         }
-        if (distance5 <=400)
+        if ((distance5 <=400)&(!stuck))
         {
-            R5.dist = distance1; 
+            R5.dist = distance5; 
         }
         else 
         {
             R5.dist = 0.0; 
+        }
+        // for debug only, let's us see when the sensor real loop(s) freeze 
+        if(stuck)
+        {
+            UART5_Write("STUCK\n\r",7);
+            DelayMs(500); 
+                    
         }
         R1.senNum = 1; 
         R2.senNum = 2; 
@@ -317,333 +407,584 @@ int detect(struct Reading F1, struct Reading F2, struct Reading F3, struct Readi
 
     // What when we only have one distance reading in a resoltuion zone
     
-    ////////////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////
-    // DUMMY INPUTS 
-    ////////////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////
-    /*
-    struct Reading R1; 
-    R1.dist = 61.2; //150.0; //61.2; 
-    R1.senNum = 1; 
+// Trying something simpler 
+    /* The code below was written to simplify obstacle detection 
+     due to inaccurate sensors and unpredictability of obstacles, 
+     * the previous code calculating angles and using multiple resolution zones 
+     * proved to complex to yield consistently accurate resutls 
+     * The code below works in preliminary test, but might need bound for 
+     * straight ahead objest corrected 
+     *  theory of opperation: 
+     * the code receives the 5 readings from the read front array function, 
+     * sorts them into an array for further processing. 
+     * Next it discards any invalid readings, that is distances outside of 
+     * (2, 400) cm range of the sensors. 
+     * In the valid readings array it next finds the minimum distance. 
+     * This gets reported as minimum distance and sent to NMCU. 
+     * 
+     * if the minimum distance is from sensor 3, the middle sensor 
+     * it finds the difference between the 2 sensors on either side of it. 
+     * it this distance is small enough ( currently 2cm, may need revised) 
+     * it determines the object is straight ahead. 
+     * Otherwise, if the sensor to the left of center reports lower distance than 
+     * the sensor to the right, the obstacle is left of center, otherwise right 
+     * of center. 
+     * 
+     * IF the lowest distance is not reported by the middle sensor, than the side
+     * on which the sensor with the lowest distance is on, is also the side 
+     * on which the obstacle is.
+     * 
+     * Sides in this context refer to an observer looking in the (forward) direction 
+     * to mower drives 
+     */
+    
+    struct Reading Read[5];                 // holds read values, for easeir proceesing 
+    Read[0] = F1;                           // Sorting received readings into Read array  
+    Read[1] = F2; 
+    Read[2] = F3; 
+    Read[3] = F4; 
+    Read[4] = F5; 
+    struct Reading Valids[5];               // holds valid (2<dist<=400) readings 
+    int cn1;                                // loop count to sort Read into valid  
+    int cn2;                                // Loop count to track elements in valid, gets incrimented only when we add
+    cn2 = 0;                                // an element to valid, and starts at o  
+    
+    int side;                               // tells us which side the object is on 
+                                            // looking forward from mowers perspective 
+                                            // 0 = right of center 
+                                            // 1 = left of center 
+                                            // 2 = Straight ahead 
+    
+    // sorts all readings with valid distanced into valid array
+    // sensors go from left to right 
+    for (cn1 = 0; cn1 <5; cn1++)
+    {
+        if((Read[cn1].dist > 2) & (Read[cn1].dist <=400))   // checking if the reading is valid
+        {
+            Valids[cn2] = Read[cn1];                        // and if so adding it to valid array 
+            cn2++;                                          // and keeping track of the number of elements in it 
+        }   
+    }
+    
+    struct Reading min;                     // struct to hold reading with shortest distance  
+    min.dist = 400.0;                       // setting distance to max, s0 that we can sort 
+    int cn3;                                // count to sort through valid array for minimum distance 
+    int cn4;                                // tracks where in valid array the minim distance reading is 
+    cn4 = 0;                                // starts at 0 
+    for (cn3 = 0; cn3 < cn2; cn3++)
+    {
+        if (Valids[cn3].dist < min.dist)    // finding next (new) min 
+        {
+            min = Valids[cn3];              // assigning it to min reading 
+            
+            cn4++;                          // and keeping track of where it is 
+        }   
+    }
+    // finding what side the obstacle is on 
+    if (min.senNum == 3)                    // if sensor 3 reports lowest distance the object might be straight ahead 
+    {   
+        if ( abs (Valids[cn4-1].dist - Valids[cn4+1].dist) < 2) 
+        {                                   // if sensors either side to center are within 2 cm, we conclude object is straight ahead
+            // straight
+            side = 2;
+        }
+        else if (Valids[cn4-1].dist > Valids[cn4+1].dist)
+        {                                   // if it's closest to center, but closer to the right than left, we say it's on the right 
+            // right 
+            side = 0; 
+            
+        }
+        else 
+        {                                   // and if it's closer to the left than right, we say it's on the left 
+            // left 
+            side = 1; 
+        }
+         
+    }                                       // otherwise, if the minimum reading is on the left side of the array, so is the object 
+    else if(min.senNum < 3)
+    {
+        // left 
+        side = 1; 
+    }
+    else if(min.senNum > 3)
+    {                                       //and finally the left  
+        // right 
+        side = 0; 
+    }
+//    else
+//    {
+//        // probelm 
+//    }
+//    if (cn4 == 0)
+//    {
+//        // object is on far left side 
+//    }
+//    else if (cn4 == cn3)
+//    {
+//        // object on far right side 
+//    }
+//    else 
+//    {
+//        if(Valids[cn4-1].dist < Valids[cn4])
+//    }
+    // add error bounds 
+    // abs(V0-Vcn) < 2? 10?
+//    if (abs(Valids[0].dist - Valids[cn2].dist) > 2)
+//    {
+//        if (Valids[0].dist < Valids[cn2].dist)
+//        {
+//            // object is left of center 
+//            side = 1; 
+//             
+//        }
+//        else if (Valids[0].dist > Valids[cn2].dist)
+//        {
+//        // object is right of center 
+//           
+//            side = 0;  
+//        }       
+//        
+//        // object is closer to left side than right, meaning it is on the right 
+//        // with some error bound 
+//    }
+//    else 
+//    {
+//        // object is straight ahead 
+//        
+//        side = 2; 
+//    }
+    
+    // finds smallest distance reported 
+//    struct Reading min;  
+//    min.dist = 400.0;
+//    int cn3; 
+//    for (cn3 = 0; cn3 < cn2; cn3++)
+//    {
+//        if (Valids[cn3].dist < min)
+//        {
+//            min.dist = Valids[cn3].dist; 
+//        }
+//        
+//    }
+    // converting numbers to strings so we can send via UART 
+    char dist[3];                       // distance  
+    char sideC[2];                      // what side we are on ( R, L, S)
+    memset(sideC , ' ', 2);             // initializing side to all spaces, so we don't send garbage 
+    if(side == 2)                       // if side == 2 object is straight ahead, see above 
+    {
+        memset(sideC, 'S', 1); 
+    }
+    else if (side == 1)                 // and if side == 1 it's to the left 
+    {
+        memset(sideC, 'L', 1); 
+    }
+    else if (side == 0)                 // and finally 0 means to the right 
+    {
+        memset(sideC, 'R', 1); 
+    }
+                                        // Note that if we haven't found the side the object is on, that field stays blank 
+    memset(dist,' ', 3);                // initializing dist to all spaces too,  
+                                        // we need 3 postitions as our distnace goes up to 400 
+                                        // but we may only need 2 of those (dist<100) so this memset is importnat 
+                                        // to prevent us from sending unwanted charachters 
+    itoa(dist, min.dist, 10);           // converting minimum distance to a string  
+     
+    // Outputting results, with (adjustable) delays 
+    // may want to convert this into one string 
+    char output[9]; 
+    memset(output, ' ', 9);
+    
+    
+    sprintf(output,"%s %s %s", dist, ",", sideC);
+    // fails to carrige return, otherwise good 
+    UART5_Write(output, 9); 
+    DelayMs(100);     //UART5_Write(dist,3);
+     
+    UART5_Write("\n\r",2); // doing cr lf here now S
+    DelayMs(10); 
 
-    struct Reading R2; 
-    R2.dist = 61.6; //61.6; 
-    R2.senNum = 2; 
-
-    struct Reading R3; 
-    R3.dist = 100.0; //;// 100.0; // 
-    R3.senNum = 3; // 
-
-    struct Reading R4; 
-    R4.dist = 99.0;// 99.0; // 
-    R4.senNum = 4; // 
-
-    struct Reading R5; 
-    R5.dist = 98.7369; //153.0; // 98.7369; // 100.0; 
-    R5.senNum = 5; 
-     */ 
+    
+    
+    
+    
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////BEGIN DECLARATION OF VARIBLES /////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    //
-    ////
-    ////// struct arrays holding readings at various stages of the sorting process 
-    ////
-    //
-    struct Reading O[5] = {F1,F2,F3,F4,F5}; // sensor readings
-    //// structs for sorted readings 
-    // by distance: 
-    struct Reading O0[5] = {}; // Readings between D1 and Do 
-    struct Reading O1[5] = {}; // Readings greater than D1 
-    struct Reading O2[5] = {}; // Readings greater than D2 
-    struct Reading O3[5] = {}; // Readings greater then D3
-    
-    // for processing sensors w. readings in the same region
-    struct Reading Odet[5] = {}; // Readings resolving the same obstacle 
-
-    // array holding detected obstacles, with Normal angle and distance 
-    struct Obstacle detected[5] = {}; 
-
-   //
-   ////
-   ////// Internal count and tracking varibles used in sorting loops and validation procedures 
-   ////
-   //
-   
-    int cnt = 0; // counts for sorting loops 
-    int cnt2 = 0; // count for sorting loops 
-
-    int cnt3 = 0; // loop count to move elements from area Arrays into detected object array 
-    int cntDet = 0; // count of sensors with valid readings in the given detection range 
-  
-    //
-    ////
-    ////// Distances defining different boundary regions, where point obstacles can be resolved with different numbers of sensors 
-    ////// not including error bounds, those are added in the applicable sorting loops themselves 
-    ////
-    //
-    float D0 = 32.54; // minimum distance to resolve object w 2 sensors 
-    float D1 = 65.09; // minimum distance to reolve object w 3 sensors
-    float D2 = 97.64; // minimum distance to resolve object w 4 sensors 
-    float D3 = 130.19; // minimum distance to resolve object w 5 sensors
- 
-   //
-   ////
-   ////// Variables to hold results or intermediate values needed to calcualte results, to be passed to calcualtion functions 
-   ////
-   //
-    float Dadj; // Adjacent distance, intermediate step to result 
-    float Dist; // distance from mower to object, result parameter 
-    float angleRef; // angle between line from refence sensor to object and front of mower, intermediate value 
-    float angleNormal; // angle between front of mower and line from cneter of mower to object
- 
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////END DECLARATION OF VARIBLES /////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  
-    ////
-    ////
-    // Loops to sort readings according to boundary region they fall into 
-    ////
-    ////
-    // if we start missing detections check these region bounds  
-    
-    for (cnt = 0; cnt <5; cnt++)
-    { // possible objects further than D3 
-        if (O[cnt].dist >= D3)
-       {
-           O3[cnt2] = O[cnt];
-           cnt2++; 
-       } 
-    }
-    cnt = 0;
-    cnt2 = 0;  
-    for (cnt = 0; cnt <5; cnt++)
-    { // possible objects between D3 and D2 including some error bound overlap 
-        if ( (O[cnt].dist >= D2) & (O[cnt].dist <= (D3 + maxdiff)))
-       {
-           O2[cnt2] = O[cnt];
-           cnt2++; 
-       } 
-    }
-    cnt = 0; 
-    cnt2= 0; 
-    for (cnt = 0; cnt <5; cnt++)
-    { // possible objects between D2 and D1 
-        if ((O[cnt].dist >= D1) & (O[cnt].dist <= (D2 + maxdiff) ))
-       {
-           O1[cnt2] = O[cnt];
-           cnt2++; 
-       } 
-    }
-    cnt = 0; 
-    cnt2 = 0; 
-    for (cnt = 0; cnt <5; cnt++)
-    { // possible objects between D0 and D1  
-        if ( (O[cnt].dist >= D0) & ( O[cnt].dist <= (D1 + maxdiff)))
-       {
-           O0[cnt2] = O[cnt];
-           cnt2++; 
-       } 
-    }
-
-
-
-    ////
-    ////
-    // Grouping readings for same object from boundary regions, beging with closest 
-    ////
-    ////
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////
-    /* old
-    Repeate this process for the other detection zones. 
-    Pass Odet array to angle and distance solve functions outlined below 
-
-    remaining issues, what when we have multiple sensor readingfs in a zone refering to different objects? 
-    What about area objects? 
-    */
-   ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    // Variables to track up to 3 different obstacles 
-    float angleRef1 = 0.0; 
-    float Dist1 = 0.0; 
-    float Dadj1 = 0.0; 
-    float angleNormal1 = 0.0;
-    // obstacle 2 
-    float angleRef2 = 0.0; 
-    float Dist2 = 0.0; 
-    float Dadj2 = 0.0; 
-    float angleNormal2 = 0.0;
-    // obstacle 3 
-    float angleRef3 = 0.0; 
-    float Dist3 = 0.0; 
-    float Dadj3 = 0.0; 
-    float angleNormal3 = 0.0;
-
-    // detected obstacles in different areas
-    // any number of sensor readings in an area will be treated as 
-    // an area obsatcle 
-
-    struct Obstacle object0;
-    struct Obstacle object1;
-    struct Obstacle object2;
-    struct Obstacle object3;
-    // initialzing distance so we can find empties later 
-    object0.distance = 0; 
-    object1.distance = 0; 
-    object2.distance = 0; 
-    object3.distance = 0; 
-
-
-    
-    ////// 
-    ////// NOTE FOR ALL Odet Arrays, senseros in array are ordered left to right when looking in dirve direction 
-    //////
-
-    ////
-    // For obstacles falling into region D0 
-    ////
-    if (O0[0].dist != 0)
-    { 
-        for (cnt3 = 0; cnt3 <5; cnt3 ++)
-        {
-            if(O0[cnt3].dist != 0)
-            {
-                Odet[cnt3]= O0[cnt3]; // sorting obstacles from O0 into detection array 
-                cntDet ++; 
-            }
-        }
-        // change these block to directly assign when done debugging 
-        angleRef = CalcAng(Odet,cntDet); 
-        Dist = CalcDist(Odet, angleRef, cntDet); 
-        Dadj = CalcDadj(Odet, cntDet, angleRef); 
-        angleNormal = CalcNormAngle(Dadj, Dist); 
-
-        // area 0 object 
-        object0.distance = Dist; 
-        object0.angle = angleNormal; 
-        
-    } 
-
-    ////
-    // For obstacles falling into region D1 
-    ////
-    cnt3 = 0; 
-    cntDet = 0; 
-    if (O1[0].dist != 0)
-    { 
-        for (cnt3 = 0; cnt3 <5; cnt3 ++)
-        {
-            if(O1[cnt3].dist != 0)
-            {
-                Odet[cnt3]= O1[cnt3]; // sorting obstacles from O1 into detection array 
-                cntDet ++; 
-            }
-        }
-        angleRef1 = CalcAng(Odet,cntDet); 
-        Dist1 = CalcDist(Odet, angleRef1, cntDet); 
-        Dadj1 = CalcDadj(Odet, cntDet, angleRef1); 
-        angleNormal1 = CalcNormAngle(Dadj1, Dist1); 
-        // area 1 object 
-        if ((Dist1!=Dist) & (angleNormal != angleNormal1))
-        {// only declaring new obstacle if it's distinct from pervios 
-            object1.distance = Dist1; 
-            object1.angle = angleNormal1; 
-
-        }
-        
-    } 
-
-    ////
-    // For obstacles falling into region D2 
-    ////
-    cnt3 =0 ; 
-    cntDet = 0; 
-    if (O2[0].dist != 0)
-    { 
-        for (cnt3 = 0; cnt3 <5; cnt3 ++)
-        {
-            if(O2[cnt3].dist != 0)
-            {
-                Odet[cnt3]= O2[cnt3]; // sorting obstacles from O2 into detection array 
-                cntDet ++; 
-            }
-        }
-        angleRef2 = CalcAng(Odet,cntDet); 
-        Dist2 = CalcDist(Odet, angleRef2, cntDet); 
-        Dadj2 = CalcDadj(Odet, cntDet, angleRef2); 
-        angleNormal2 = CalcNormAngle(Dadj2, Dist2); 
-
-        // area 2 object 
-        if ((Dist1!=Dist2) & (angleNormal2 != angleNormal1))
-        {// only declaring new obstacle if it's distinct from pervios 
-            object2.distance = Dist2; 
-            object2.angle = angleNormal2; 
-        } 
-    } 
-
-
-    ////
-    // For obstacles falling into region D3
-    ////
-    cnt3 = 0;
-    cntDet = 0;  
-    if (O3[0].dist != 0)
-    { 
-        for (cnt3 = 0; cnt3 <5; cnt3 ++)
-        {
-            if(O3[cnt3].dist != 0)
-            {
-                Odet[cnt3]= O3[cnt3]; // sorting obstacles from O3 into detection array 
-                cntDet ++; 
-            }
-        }
-        angleRef3 = CalcAng(Odet,cntDet); 
-        Dist3 = CalcDist(Odet, angleRef3, cntDet); 
-        Dadj3 = CalcDadj(Odet, cntDet, angleRef3); 
-        angleNormal3 = CalcNormAngle(Dadj3, Dist3); 
-
-         // area 3 object 
-        if ((Dist2!=Dist3) & (angleNormal2 != angleNormal3))
-        {// only declaring new obstacle if it's distinct from pervios 
-            object3.distance = Dist3; // changed end count from 1 to 3 bc that seemd logical IF THINGS FUCK UP CHANGE THIS BACK
-            object3.angle = angleNormal3; 
-        }
-    } 
-    // Array to hold detected obstacles 
-    detected[0] = object0; 
-    detected[1] = object1; 
-    detected[2] = object2; 
-    detected[3] = object3; 
-
-
-
-   //
-   //// Print Outputs of calculated data to terminal, for test/debug/validation purposes 
-   //
-   
-  
-    //
-    //// section to send obstacle data to NAV MCU 
-    // sending closest obstalce first 
-    int scnt = 0; // send loop count. 
-    
-    for ( scnt = 0; scnt <=4; scnt++)
-    {
-        if(detected[scnt].distance != 0)
-        {   // repalce cout with uart send  
-            
-            // UART SEND Obstacle[scnt].distance, Obstacle[scnt].angle to NAV MCU 
-        }
-    }
-    
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//    //
+//    ////
+//    ////// struct arrays holding readings at various stages of the sorting process 
+//    ////
+//    //
+//    struct Reading O[5] = {F1,F2,F3,F4,F5}; // sensor readings
+//    //// structs for sorted readings 
+//    // by distance: 
+//    struct Reading O0[5] = {}; // Readings between D1 and Do 
+//    struct Reading O1[5] = {}; // Readings greater than D1 
+//    struct Reading O2[5] = {}; // Readings greater than D2 
+//    struct Reading O3[5] = {}; // Readings greater then D3
+//    
+//    // for processing sensors w. readings in the same region
+//    struct Reading Odet[5] = {}; // Readings resolving the same obstacle 
+//
+//    // array holding detected obstacles, with Normal angle and distance 
+//    struct Obstacle detected[5] = {}; 
+//
+//   //
+//   ////
+//   ////// Internal count and tracking varibles used in sorting loops and validation procedures 
+//   ////
+//   //
+//   
+//    int cnt = 0; // counts for sorting loops 
+//    int cnt2 = 0; // count for sorting loops 
+//
+//    int cnt3 = 0; // loop count to move elements from area Arrays into detected object array 
+//    int cntDet = 0; // count of sensors with valid readings in the given detection range 
+//  
+//    //
+//    ////
+//    ////// Distances defining different boundary regions, where point obstacles can be resolved with different numbers of sensors 
+//    ////// not including error bounds, those are added in the applicable sorting loops themselves 
+//    ////
+//    //
+//    float D0 = 3.0; // minimum distance sensor can resolve 32.54; // minimum distance to resolve object w 2 sensors 
+//    float D1 = 65.09; // minimum distance to resolve object w 3 sensors
+//    float D2 = 97.64; // minimum distance to resolve object w 4 sensors 
+//    float D3 = 130.19; // minimum distance to resolve object w 5 sensors
+// 
+//   //
+//   ////
+//   ////// Variables to hold results or intermediate values needed to calcualte results, to be passed to calcualtion functions 
+//   ////
+//   //
+//    float Dadj; // Adjacent distance, intermediate step to result 
+//    float Dist; // distance from mower to object, result parameter 
+//    float angleRef; // angle between line from refence sensor to object and front of mower, intermediate value 
+//    float angleNormal; // angle between front of mower and line from cneter of mower to object
+// 
+//
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////END DECLARATION OF VARIBLES /////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//  
+//    ////
+//    ////
+//    // Loops to sort readings according to boundary region they fall into 
+//    ////
+//    ////
+//    // if we start missing detections check these region bounds  
+//    
+//    for (cnt = 0; cnt <5; cnt++)
+//    { // possible objects further than D3 
+//        if (O[cnt].dist >= D3)
+//       {
+//           O3[cnt2] = O[cnt];
+//           cnt2++; 
+//       } 
+//    }
+//    cnt = 0;
+//    cnt2 = 0;  
+//    for (cnt = 0; cnt <5; cnt++)
+//    { // possible objects between D3 and D2 including some error bound overlap 
+//        if ( (O[cnt].dist >= D2) & (O[cnt].dist <= (D3 + maxdiff)))
+//       {
+//           O2[cnt2] = O[cnt];
+//           cnt2++; 
+//       } 
+//    }
+//    cnt = 0; 
+//    cnt2= 0; 
+//    for (cnt = 0; cnt <5; cnt++)
+//    { // possible objects between D2 and D1 
+//        if ((O[cnt].dist >= D1) & (O[cnt].dist <= (D2 + maxdiff) ))
+//       {
+//           O1[cnt2] = O[cnt];
+//           cnt2++; 
+//       } 
+//    }
+//    cnt = 0; 
+//    cnt2 = 0; 
+//    for (cnt = 0; cnt <5; cnt++)
+//    { // possible objects between D0 and D1  
+//        if ( (O[cnt].dist >= D0) & ( O[cnt].dist <= (D1 + maxdiff)))
+//       {
+//           O0[cnt2] = O[cnt];
+//           cnt2++; 
+//       } 
+//    }
+//
+//
+//
+//    ////
+//    ////
+//    // Grouping readings for same object from boundary regions, beginning with closest 
+//    ////
+//    ////
+//    /////////////////////////////////////////////////////////////////////////////////////////////////////////
+//    /* old
+//    Repeate this process for the other detection zones. 
+//    Pass Odet array to angle and distance solve functions outlined below 
+//
+//    remaining issues, what when we have multiple sensor readingfs in a zone refering to different objects? 
+//    What about area objects? 
+//    */
+//   ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//    // Variables to track up to 3 different obstacles 
+//    float angleRef1 = 0.0; 
+//    float Dist1 = 0.0; 
+//    float Dadj1 = 0.0; 
+//    float angleNormal1 = 0.0;
+//    // obstacle 2 
+//    float angleRef2 = 0.0; 
+//    float Dist2 = 0.0; 
+//    float Dadj2 = 0.0; 
+//    float angleNormal2 = 0.0;
+//    // obstacle 3 
+//    float angleRef3 = 0.0; 
+//    float Dist3 = 0.0; 
+//    float Dadj3 = 0.0; 
+//    float angleNormal3 = 0.0;
+//
+//    // detected obstacles in different areas
+//    // any number of sensor readings in an area will be treated as 
+//    // an area obsatcle 
+//
+//    struct Obstacle object0;
+//    struct Obstacle object1;
+//    struct Obstacle object2;
+//    struct Obstacle object3;
+//    // initialzing distance so we can find empties later 
+//    object0.distance = 0; 
+//    object1.distance = 0; 
+//    object2.distance = 0; 
+//    object3.distance = 0; 
+//
+//
+//    
+//    ////// 
+//    ////// NOTE FOR ALL Odet Arrays, senseros in array are ordered left to right when looking in dirve direction 
+//    //////
+//
+//    ////
+//    // For obstacles falling into region D0 
+//    ////
+//    if (O0[0].dist != 0)
+//    { 
+//        for (cnt3 = 0; cnt3 <5; cnt3 ++)
+//        {
+//            if(O0[cnt3].dist != 0)
+//            {
+//                Odet[cnt3]= O0[cnt3]; // sorting obstacles from O0 into detection array 
+//                cntDet ++; 
+//            }
+//        }
+//        // change these block to directly assign when done debugging 
+//        angleRef = CalcAng(Odet,cntDet); 
+//        Dist = CalcDist(Odet, angleRef, cntDet); 
+//        Dadj = CalcDadj(Odet, cntDet, angleRef); 
+//        angleNormal = CalcNormAngle(Dadj, Dist); 
+//
+//        // area 0 object 
+//        // Validation, if distance is not in (2,400) cm, or |angle| > 90 deg, we have an error 
+//       // Validate angle first, then distance, that way if dist is valid, so is angle 
+//        
+//        if (abs(angleNormal) <= 90)
+//        {
+//            object0.angle = angleNormal;
+//            if ((Dist > 2) && (Dist < 400))
+//            {
+//                object0.distance = Dist; 
+//            // initialized to 0 
+//            }
+//        }
+//         
+//        
+//    } 
+//
+//    ////
+//    // For obstacles falling into region D1 
+//    ////
+//    cnt3 = 0; 
+//    cntDet = 0; 
+//    if (O1[0].dist != 0)
+//    { 
+//        for (cnt3 = 0; cnt3 <5; cnt3 ++)
+//        {
+//            if(O1[cnt3].dist != 0)
+//            {
+//                Odet[cnt3]= O1[cnt3]; // sorting obstacles from O1 into detection array 
+//                cntDet ++; 
+//            }
+//        }
+//        angleRef1 = CalcAng(Odet,cntDet); 
+//        Dist1 = CalcDist(Odet, angleRef1, cntDet); 
+//        Dadj1 = CalcDadj(Odet, cntDet, angleRef1); 
+//        angleNormal1 = CalcNormAngle(Dadj1, Dist1); 
+//        // area 1 object 
+//        if ((Dist1!=Dist) & (angleNormal != angleNormal1))
+//        {// only declaring new obstacle if it's distinct from previous 
+//            // Validation, if distance is not in (2,400) cm, or |angle| > 90 deg, we have an error 
+//            if ( (Dist1 > 2) && (Dist1 <=400))
+//            {
+//                object1.distance = Dist1;
+//            }
+//            if (abs(angleNormal1) <= 90)
+//            {
+//                object1.angle = angleNormal1;
+//                if ( (Dist1 > 2) && (Dist1 <=400))
+//                {
+//                    object1.distance = Dist1;
+//                }
+//            }
+//
+//        }
+//        
+//    } 
+//
+//    ////
+//    // For obstacles falling into region D2 
+//    ////
+//    cnt3 =0 ; 
+//    cntDet = 0; 
+//    if (O2[0].dist != 0)
+//    { 
+//        for (cnt3 = 0; cnt3 <5; cnt3 ++)
+//        {
+//            if(O2[cnt3].dist != 0)
+//            {
+//                Odet[cnt3]= O2[cnt3]; // sorting obstacles from O2 into detection array 
+//                cntDet ++; 
+//            }
+//        }
+//        angleRef2 = CalcAng(Odet,cntDet); 
+//        Dist2 = CalcDist(Odet, angleRef2, cntDet); 
+//        Dadj2 = CalcDadj(Odet, cntDet, angleRef2); 
+//        angleNormal2 = CalcNormAngle(Dadj2, Dist2); 
+//
+//        // area 2 object 
+//        if ((Dist1!=Dist2) & (angleNormal2 != angleNormal1))
+//        {// only declaring new obstacle if it's distinct from pervios 
+//            // Validation, if distance is not in (2,400) cm, or |angle| > 90 deg, we have an error 
+//            
+//            if (abs(angleNormal2) <= 90)
+//            {
+//                object2.angle = angleNormal2; 
+//                if ( (Dist2 > 2) && (Dist2 <=400))
+//                {
+//                    object2.distance = Dist2;
+//                }
+//            }
+//             
+//        } 
+//    } 
+//
+//
+//    ////
+//    // For obstacles falling into region D3
+//    ////
+//    cnt3 = 0;
+//    cntDet = 0;  
+//    if (O3[0].dist != 0)
+//    { 
+//        for (cnt3 = 0; cnt3 <5; cnt3 ++)
+//        {
+//            if(O3[cnt3].dist != 0)
+//            {
+//                Odet[cnt3]= O3[cnt3]; // sorting obstacles from O3 into detection array 
+//                cntDet ++; 
+//            }
+//        }
+//        angleRef3 = CalcAng(Odet,cntDet); 
+//        Dist3 = CalcDist(Odet, angleRef3, cntDet); 
+//        Dadj3 = CalcDadj(Odet, cntDet, angleRef3); 
+//        angleNormal3 = CalcNormAngle(Dadj3, Dist3); 
+//
+//         // area 3 object 
+//        if ((Dist2!=Dist3) & (angleNormal2 != angleNormal3))
+//        {// only declaring new obstacle if it's distinct from pervios 
+//            // Validation, if distance is not in (2,400) cm, or |angle| > 90 deg, we have an error 
+//            
+//            if (abs(angleNormal3) <= 90)
+//            {
+//                object3.angle = angleNormal3; 
+//                if ( (Dist3 > 2) && (Dist3 <=400))
+//                {
+//                    object3.distance = Dist3;
+//                }
+//            }
+//            
+//        }
+//    } 
+//    // Array to hold detected obstacles 
+//    // Only load obstacesl into detection array if they have a valid distance
+//    // angle is validated before distance, so valid distance implies valid angle 
+//    if (object0.distance != 0)
+//    {
+//        detected[0] = object0; 
+//    }
+//    if (object1.distance != 0)
+//    {
+//        detected[1] = object1; 
+//    }      
+//    if (object2.distance != 0)
+//    {
+//        detected[2] = object2; 
+//    }
+//    if (object3.distance != 0)
+//    {
+//        detected[3] = object3; 
+//    }
+////    detected[1] = object1; 
+////    detected[2] = object2; 
+////    detected[3] = object3; 
+//    // strings for uart output, filled w white spaces 
+//    char Dout[4]; 
+//    memset(Dout, ' ', 4);
+//    char Aout[3]; 
+//    memset(Aout, ' ', 3); 
+//    //int DistOut; 
+//    //int AngOut; 
+//
+//
+//
+//   //
+//   //// Print Outputs of calculated data to terminal, for test/debug/validation purposes 
+//   //
+//   
+//  
+//    //
+//    //// section to send obstacle data to NAV MCU 
+//    // sending closest obstalce first 
+//    int scnt = 0; // send loop count.
+//    
+//    for (scnt = 0; scnt <4; scnt++)
+//    {
+//        if(detected[scnt].distance != 0)
+//        {   // repalce cout with uart send  distance
+//        // reverted back to loop, incase we have multiple obstacles, 
+//        // let's see how it works. 
+//        
+//            itoa(Dout, detected[scnt].distance, 10); 
+//            itoa(Aout, detected[scnt].angle, 10); 
+//            UART5_Write("Objects: ", 9);
+//            UART5_Write(Dout , 4);
+//            DelayMs(100);
+//            UART5_Write(" , ", 3); 
+//            DelayMs(500);
+//            UART5_Write(Aout, 3);  
+//            DelayMs(500); 
+//            UART5_Write("\n\r", 2); 
+//        }
+//    }
+//    
     return 0; 
 
 }
-
+/******************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
 int sideDetect(struct Reading S1, struct Reading S2)
 { 
 // side obstacle detection
@@ -656,33 +997,192 @@ sensor seperation is different
 All distances in cm 
 all angles in degrees ( unless otherwise noted) 
 
-ASSUMES     S1 is towards front of mover and S2 is to rear 
+ASSUMES     Side1 is towards front of mover and Side2 is to rear 
+ * Side 1 is on RD13 
+ * Side 2 is on RJ1 
+ * ////// THESE ASSIGMNETS WERE NOT YET TESTED DUE TO POWER OUTAGE 
+ * Function cleans and builds but is not validated beyond that due to power outage 
+ * Needs additional comentes for clarity, Defer process to later when power comes back 
 */ 
 
 // struct to hold sensor readings, Dummy for now 
+    bool end = false; // bool to check reading status 
+    // Bools to check if we have start /end values for side sensor 1 
+    bool Side1S = false; 
+    bool Side1E = false;
+    // tracks start and end timer values for side sensor 1 
+    int Side1_Start = 0; 
+    int Side1_End = 0; 
+    // Bools to check if we have start /end values for side sensor 2
+    bool Side2S = false; 
+    bool Side2E = false; 
+    // tracks start and end timer values for Side sensor 2 
+    int Side2_Start = 0; 
+    int Side2_End = 0; 
+    
+    int SideStarts = 0; // tracks num of side sensor that have start reading 
+    int SideEnds = 0; // tracks num of side sensor that have end reading 
+    
+    // Pin 113 RD13 for front side sensor 
+    // Pin 115 RJ1 for read side sensor 
+    /******************************************************************************/
+    // NEEDS IT'S OWN TRIGGER 
+    /******************************************************************************/
+    GPIO_RD13_InputEnable(); 
+    GPIO_RJ1_InputEnable(); 
+
+    
+   
+    
+         
+    
+    GPIO_RB14_OutputEnable(); 
+    // Triggers side array 
+    GPIO_RB14_Set(); 
+    DelayUs(10); 
+    GPIO_RB14_Clear(); 
+    // copied f. front array function 
+    int TmrLoopCheck = 0; // reads timer value on current itteration of loop 
+    int TmrLoopCheckL = 0; // holds timer value of last loop itteration 
+    int TMRLoops = 0; // counts the number of timer loops 
+    bool stuck = false; // tells us if we are stuck in an infinite loop 
+        /* the timer period is 40ms, all sensors should return echo pulse in less 
+         * than 40ms. But since the timer may be at any value when we start we may
+         * loop as much as once, and still be vaild. 
+         * IF we loop more then once, than we are stuck. 
+         * by comparing this itterations timer value to lasts we can see if the 
+         * timer has reset. if it has reset, we incriment TMRLoops. If TMR loops >= 2 
+         * we have not received a valid return from the sensors and break the loop 
+         * by using the stuck bool 
+         * If sensors fail we will not get the signals we are looking for below, 
+         * and are left in an infinite loop
+         */
+    // detail to be added. For now see front array read function 
+    while ((!end)&(!stuck)) // looking for start readings 
+    {
+        if ((GPIO_RD13_Get() == 1)&(!Side1S))
+        {   // Side front  
+            Side1_Start = TMR3_CounterGet(); 
+            SideStarts ++; 
+            Side1S = true;
+        } 
+        if ((GPIO_RJ1_Get() == 1)&(!Side2S))
+        {   //Side read 
+            Side2_Start = TMR3_CounterGet(); 
+            SideStarts++; 
+            Side2S = true; 
+        } 
+        TmrLoopCheck = TMR3_CounterGet(); 
+        if (TmrLoopCheck > TmrLoopCheckL)
+        {
+            TmrLoopCheckL = TmrLoopCheck; 
+        }
+        else if (TmrLoopCheck < TmrLoopCheckL)
+        {
+            TMRLoops = TMRLoops+1; 
+            TmrLoopCheckL = 0; 
+            
+        }
+        if (TMRLoops >=2)
+        {
+            stuck = true; 
+        }
+        if(SideStarts == 2) // we have start readings from all, can begin looking for ends 
+        {
+            TmrLoopCheckL = 0; 
+            while ((!end)&(!stuck))
+            {
+                if ((GPIO_RD13_Get() == 0)&(!Side1E)) 
+                {   //Side front 
+                    Side1_End= TMR3_CounterGet(); 
+                    SideEnds++; 
+                    Side1E = true; 
+                }
+                if ((GPIO_RJ1_Get() == 0)&(!Side2E))
+                {   //Side read 
+                    Side2_End = TMR3_CounterGet(); 
+                    SideEnds ++; 
+                    Side2E = true; 
+
+                }
+                if (SideEnds == 2)
+                {
+                    end = true; 
+                }
+                TmrLoopCheck = TMR3_CounterGet(); 
+                if (TmrLoopCheck > TmrLoopCheckL)
+                {
+                    TmrLoopCheckL = TmrLoopCheck; 
+                }
+                    else if (TmrLoopCheck < TmrLoopCheckL)
+                {
+                    TMRLoops = TMRLoops+1; 
+                    TmrLoopCheckL = 0; 
+            
+                }
+                if (TMRLoops >=2)
+                {
+                    stuck = true; 
+                }
+            }
+        }
+    }
+    // tracking timer difference for side sensors 
+    // validating incase TMR loop 
+    int Side1diff = 0; 
+    int Side2diff = 0; 
+    
+    if (Side1_Start < Side1_End)
+    {
+        Side1diff = Side1_End - Side1_Start; 
+    }
+    else 
+    {
+        Side1diff = (1562500 - Side1_Start)+Side1_End; 
+    }
+    if (Side2_Start < Side2_End)
+    {
+        Side2diff = Side2_End - Side2_Start; 
+    }
+    else 
+    {
+        Side2diff = (1562500 - Side2_Start)+Side2_End; 
+    }
+    
+    struct Reading Side1; 
+    struct Reading Side2; 
+    
+    float Side1Dist; 
+    float Side2Dist; 
+    Side1Dist = Side1diff * 0.01088;
+    Side2Dist = Side2diff * 0.01088; 
+    if (Side1Dist < 400)
+    {
+        Side1.dist = Side1Dist; 
+    }
+    else
+    {
+        Side1.dist = 0.0; 
+    }
+    if (Side2Dist < 400)
+    {
+        Side2.dist = Side2Dist; 
+    }
+    else 
+    {
+        Side2.dist = 0.0; 
+    }
+    Side1.senNum = 1; 
+    Side2.senNum = 2; 
+    
+    
     
 // sensor seperation. needs correct value when physically implemented /////////////////////////////////////////////////////////////////////
-    float Sep = 25; 
+    float Sep = 23.5; // in test setup
 
 
 
-    ////////////////////////////////////////////////////////////////////////////
-    // dummy inputs 
-    ////////////////////////////////////////////////////////////////////////////
-    struct Reading R6; 
-    R6.dist = 15.0; 
-    R6.senNum = 1; 
-
-    struct Reading R7; 
     
-    R7.dist = 10.0; 
-    R7.senNum = 2; 
-    
-    S1.dist = R6.dist; 
-    S1.senNum = R6.senNum; 
-    
-    S2.dist = R7.dist; 
-    S2.senNum = R7.senNum; 
             
 
 
@@ -698,45 +1198,61 @@ ASSUMES     S1 is towards front of mover and S2 is to rear
     
     float distDiff = 0.0; // difference in distance readings 
     // if we're closing 
-    if (S1.dist < S2.dist)
-    {   minDist = S1.dist; 
-        distDiff = S2.dist - S1.dist; 
+    if (Side1.dist < Side2.dist)
+    {   minDist = Side1.dist; 
+        distDiff = Side2.dist - Side1.dist; 
         closing = 1; 
     }
     // if we're moving away 
-    else if (S1.dist > S2.dist)
+    else if (Side1.dist > Side2.dist)
     {
-        minDist = S2.dist; 
-        distDiff = S1.dist - S2.dist; 
+        minDist = Side2.dist; 
+        distDiff = Side1.dist - Side2.dist; 
         closing = 0; 
     }
     // if we are parrallel to the object 
     else 
     { 
-        minDist = S1.dist; 
+        minDist = Side1.dist; 
         ang = 0.0; 
     }
     // calculating anlge, using right triangle trig 
     ang = (180/3.141) * atan(distDiff/Sep);
-
-    if (ang != minDist)
-    { 
-        ang = minDist; 
-    }
-    // output. Dummy for now, needs coordinated with JOSH 
+    // Converting angle and distance to strings for sending 
+    char sideang[2]; 
+    memset(sideang, ' ', 2); 
+    char sidedist[3]; 
+    memset(sidedist, ' ', 3); 
+    itoa(sideang, ang, 10); 
+    itoa(sidedist, minDist, 10); 
+    ////////////////////////////////////////////////////////////////////////////
+    // NOTE: ANGLE IS POSITIVE EITHER WAY (closing or not closing) , COORDINATE WITH JOSH FOR FORMATING 
+    ////////////////////////////////////////////////////////////////////////////
+    UART5_Write("min dist: ", 10);
+    DelayMs(50);
+    UART5_Write(sidedist, 3); 
+    DelayMs(50); 
+    UART5_Write(" ", 1); 
+    DelayMs(50); 
+    UART5_Write("Angle: ", 7);
+    DelayMs(50);
+    UART5_Write(sideang, 2); 
+    DelayMs(50);
+    UART5_Write("\n\r",2); 
     if (closing == 1)
     {
-        // UTX cout << "CLOSING" << endl << " w angle: " << ang << " @ " << minDist << endl;  
+         
+        // set obstacle flag ( pin RB7 high) )
     }
     else if (closing != 1) 
     { 
-        // UTX cout << ang << endl << minDist << endl; 
+        // else set obstacle flag ( pin RB7 low) )
     }
 
     return 0; 
 
 }
-
+/******************************************************************************/
 float CalcAng (struct Reading OValid[5], int cntDet )
 {
     // REFERANCE ANGLE FUNCTION//
@@ -758,7 +1274,7 @@ float CalcAng (struct Reading OValid[5], int cntDet )
     // returining angle in degrees 
     return argcDeg;   
 }
-
+/******************************************************************************/
 float CalcDist(struct Reading OValid[5], float angle, int cntDet)
 {
     /* function calcuates the perpnedicaulr distance from the mower 
@@ -770,6 +1286,7 @@ float CalcDist(struct Reading OValid[5], float angle, int cntDet)
     float dist = (OValid[cntDet-1].dist) * sin(angle*(3.141/180)); 
     return dist; 
 }
+/******************************************************************************/
 float CalcDadj(struct Reading OValid[0], int cntDet, float angle)
 { 
     float Dadj = 0.0;
@@ -839,7 +1356,7 @@ float CalcDadj(struct Reading OValid[0], int cntDet, float angle)
     return Dadj; // length of line adjacent for right triangle trig, 
     // distance from normal line of object to mower to center of mower ( as defined as central sensor. SenNum 3)
 }
-
+/******************************************************************************/
 float CalcNormAngle(float Dadj, float dist)
 { 
     /* calculates the angle a line from the center of the mower to the object 
