@@ -1,6 +1,9 @@
 # ECEN404_MCU
 MCU code for senior desgin project
 
+README OUT OF DATE 
+some nav code added. will update soon 
+
 Code for use on the PIC32MZ-2048-EFH-144 Microcontroller used for this project. 
 TODO: 
 get region specifiactions from josh and configure alert pin. 
