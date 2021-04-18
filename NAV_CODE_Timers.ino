@@ -6,13 +6,13 @@ const uint8_t PinL  = 12;  // 12 corresponds to GPIO12
 
 const uint8_t PinR  = 13;  // 13 corresponds to GPIO13 
 
-const uint8_t PinL_in1  = 2;  // 12 corresponds to GPIO15 
+const uint8_t PinL_in1  = 2;  // 12 corresponds to GPIO2 
 
-const uint8_t PinL_in2  = 15;  // 13 corresponds to GPIO0 
+const uint8_t PinL_in2  = 15;  // 13 corresponds to GPIO15 
 
-const uint8_t PinR_in3  = 18;  // 12 corresponds to GPIO4 
+const uint8_t PinR_in3  = 18;  // 12 corresponds to GPIO18 
 
-const uint8_t PinR_in4  = 4;  // 13 corresponds to GPIO2 
+const uint8_t PinR_in4  = 4;  // 13 corresponds to GPIO4 
 
 
 // setting PWM properties
