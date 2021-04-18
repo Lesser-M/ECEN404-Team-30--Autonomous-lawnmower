@@ -115,6 +115,8 @@ const uint8_t Pin_LA = 32;        // left ch a se pin
 const uint8_t Pin_RA = 33;     // right ch A pin   
 
 const uint8_t O_ALERT = 35;     // ostacle alert pin from pic    
+
+const uint8_t Blade = 0; //PINNUM;  //******************************************************************************************************// 
 //******************************************************************************************************//                              
 // Global Vars for se indicator counts  
 int L_SE_CNT_GLOB = 0; 
@@ -264,6 +266,7 @@ void IRAM_ATTR L_A_ISR() {
   L_A_GLOB++;
 }
 
+/* ISR causes unexcpeted opperation 
 void IRAM_ATTR ODET()
 { 
   // if OD alert pin sets high, set the OBSTACLE bool to high 
@@ -271,6 +274,7 @@ void IRAM_ATTR ODET()
   //Serial.println("Found it"); 
   //delay(2000); 
 }
+*/ 
 
 // ------------------------------------------- NAVIGATION FUNCTIONS//------------------------------------------//
 /// sets left motor to go forward 
@@ -333,6 +337,195 @@ void Right_C(void)
   //Serial.println("right motor coast"); 
   
 }
+//******************************************************************************************************// 
+// Stop Function 
+void Stop()
+{
+  //Serial.println("Stopping"); 
+  // dosen't fall out of loop. attempt to use I channel instead 
+  attachInterrupt(Pin_LA, L_A_ISR, RISING);
+
+  attachInterrupt(Pin_RA, R_A_ISR, RISING);
+
+  R_A_GLOB = 0;   // resetting ch a encoder counts  
+
+  L_A_GLOB = 0; 
+
+  //R_SE_CNT_GLOB = 0; 
+
+  //L_SE_CNT_GLOB = 0; 
+
+  L_last = 0;   // hold last encode value on channel A, so check if we've actully stopped 
+
+  R_last = 0; 
+
+  stopped = false;      // resetting bool 
+  
+  // stops mower 
+  // breaking by applying low power reverse 
+  // breaks Left Motor 
+  Right_R(STOP); 
+  
+  Left_R(STOP); 
+
+   
+
+  ind = 1;              // incrementally boosts reversing power 
+
+  while((!stopped) & (ind <= 15)) // 
+  { 
+    L_last = L_SE_CNT_GLOB;    // last SE- ch A count becomes current CH- A count for both wheels 
+
+    R_last = R_SE_CNT_GLOB; 
+
+    ind++;                // seems to not fall out of loop. adding this to make sure it does 
+
+    delay(100);           // delay by 0.1 seconds. assumption is that if we have not moved at least 1/48th of a rotation in 0.1 seconds we are stopped 
+
+    if ((L_last == L_A_GLOB) & (R_last == R_A_GLOB))   // gave error margin of 3/48                                                   // possibly include error bound here? 
+    { // if both left and right wheel haven't moved more than 1/48th of a rotation in the last 0.1 seconds
+      // mower is stopped 
+      stopped = true; 
+     
+    }
+    
+    else if (correction)        // if course correction is active. Bool set at top 
+    {
+      if ((L_last == L_A_GLOB) && (R_last != R_A_GLOB)) 
+      { 
+        // left wheel stopped but right has not 
+        ledcWrite(2,STOP + (3*ind));  // progressivly increase reverse thrust on right wheel 
+        ind ++; 
+        
+      }
+      else if ((L_last != L_A_GLOB) & (R_last == R_A_GLOB)) 
+      { 
+        // if right wheel has stopped and left has not 
+        ledcWrite(1,STOP +(3*ind));   // progresivly increase reverse thrust on left wheel
+        ind ++; 
+      }
+    }
+    
+  }
+
+  // if we have stopped, turn both motors off and detach interrupts 
+
+  detachInterrupt(Pin_LA);
+
+  detachInterrupt(Pin_RA);
+  
+  //Right_C(); 
+
+  //Left_C(); 
+
+  
+}
+// Go straight function
+//******************************************************************************************************// 
+// Go straight function
+
+void GoStraight(int Rotations)
+{
+  // sets output to go straight, for dist 
+  // straight for left 
+  //Serial.printf("Going Straight for %f", dist); 
+  
+  if (correction) 
+  {
+    // setting up for course correction 
+    // to adjust left and right wheel speed to keep the same number of rotation on both wheels
+    attachInterrupt(Pin_LA, L_A_ISR, RISING);
+
+    attachInterrupt(Pin_RA, R_A_ISR, RISING);
+
+    L_A_GLOB = 0;  
+
+    R_A_GLOB = 0; 
+
+    // we have a choice here. we can either reset left and right wheel to medium speed each itteration, as we do here 
+    // OR we can not do that, under the assuption that the correction function find the correct speed for both motors, 
+    // and that they stay more or less true after the first correction cycle 
+    // may depend on variability of terrain over the current course. 
+
+    med_L = MED;  
+
+    med_R = MED; 
+    
+  }
+  Left_F(MED); 
+
+  Right_F(MED); 
+  
+  
+   
+  //Reverse for right motor
+
+  
+
+  // at full speed 
+  //int Rotations = floor(dist/Rot_dist); // num of shaft rotations needed to travel dist;  
+
+  R_SE_CNT_GLOB = 0;    // reset for accurate tracking 
+
+  while ((R_SE_CNT_GLOB < Rotations))
+  {
+    
+    if (correction) 
+    { 
+      // couse correction. slow one wheel if the difference in rotation is greater than 1/12th 
+      // if correction is to aggresive / weak, can change either the delay we give the othwer wheel to catch up. 
+      // or the speed decrese for the offencting wheel 
+      if(abs(L_A_GLOB - R_A_GLOB) > 4)          // if we are off by more than 1/12th rotation between the 2 wheels
+      { 
+        if(L_A_GLOB > R_A_GLOB)                 // left wheel faster than right 
+        { 
+          med_L = med_L - 1;            // decreasing left wheel PWM by 1          
+          ledcWrite(1,med_L);  
+          delay(50);                    // giving right wheel time to catch up 
+          
+        }
+        else                                    // right wheel faster than left 
+        { 
+          med_R = med_R - 1;            // decreasing right wheel PWM by 1           
+          ledcWrite(2,med_R); 
+          delay(50);                    // giving left wheel time to catch up        
+          
+        }
+      }
+    }
+    
+    //delay(10);    // used as NOP instruction here I feel like i should take this out, but I'm leaving it here cause that's what i last ran at 
+    //Serial.printf("On rot num %d ", R_SE_CNT_GLOB); 
+    //Serial.println("Going"); 
+       //delay(10);    // used as NOP instruction here 
+    //Serial.printf("On rot num %d ", R_SE_CNT_GLOB); 
+    //Serial.println("Going"); 
+    if ( digitalRead(O_ALERT == HIGH) ) // & (!evading)) // insert to only evade once 
+    {
+      Serial.println("Begin Obstacle Evasion Now"); 
+      Clear_Obstacle(); 
+    }
+    
+  
+
+  // coasting both wheels after we've compleated the straigh leg 
+
+  //Right_C(); 
+
+  //Left_C(); 
+
+  
+  if(correction)
+  {
+    detachInterrupt(Pin_LA);
+
+    detachInterrupt(Pin_RA);
+  }
+
+  }
+}
+
+
 
 //******************************************************************************************************// 
 void Clear_Obstacle(void)
@@ -342,7 +535,7 @@ void Clear_Obstacle(void)
   /*default to turn to right, so that we can keep the obstacle on out 
    * left, and in view of the left side sensors. 
    */
-  bool TimeBased = false; 
+  bool TimeBased = true;      // shaft encoder malfunction prevents us from using rotation based evasion  
   Stop(); 
   evading = true; 
   OBSTACLE = false; // need to reset here to not fall into evasion repeatedly, i think                                                 // check here// 
@@ -502,220 +695,142 @@ void Clear_Obstacle(void)
   }
   else 
   { 
+    digitalWrite(Blade, LOW); // turn off blade while evading 
+    // stop 
+    Right_R(10); 
+    Left_R(10); 
+    delay(5000); 
     // turing out 
-    Left_F(SLOW); 
-    Right_R(STOP); 
-    delay(200);
+    Left_F(TURN); 
+    Right_R(STOP+15); 
+    delay(1000);
     // going past  
     Left_F(SLOW); 
     Right_F(SLOW); 
-    delay(1000); 
+    delay(900); 
     // turning back towards original path 
     Left_R(STOP); 
-    Right_F(SLOW); 
-    delay(400); 
+    Right_F(TURN); 
+    delay(2000);     
     // coming back 
     Left_F(SLOW); 
     Right_F(SLOW); 
-    delay(1000); 
+    delay(900); 
     // straightening out 
-    Left_R(STOP); 
-    Right_F(SLOW); 
-    delay(200);
+    Left_F(SLOW); 
+    Right_R(STOP+15); 
+    delay(1000);
+    Stop(); 
+    delay(1000); 
+
+    digitalWrite(Blade, HIGH);    // turn blade back on after obstacle is cleared 
     
     
   }
   evading = false; //******************************************************************************************************// if we keep falling into ODET, set this to true to only do it once
   Serial.println("Obstacle avoided"); 
 }
-
-// Go straight function
 //******************************************************************************************************// 
-// Go straight function
-
-void GoStraight(int Rotations)
-{
-  // sets output to go straight, for dist 
-  // straight for left 
-  //Serial.printf("Going Straight for %f", dist); 
-  
-  if (correction) 
+// not implemented due to lack of time 
+//******************************************************************************************************// 
+/*
+void Read_GPS(void)
+{ 
+  Serial2.begin(9600);
+  Serial2.flush(); 
+  bool reading = true; 
+  while(reading)
+  { 
+    if (Serial2.available() > 5)
+    {
+      reading = false; 
+    }
+    delay(10); 
+    Serial.println("waiting for GPS"); 
+  }
+  int cnt = 0; 
+  for (cnt = 0; cnt <6; cnt++)
   {
-    // setting up for course correction 
-    // to adjust left and right wheel speed to keep the same number of rotation on both wheels
+    heading_STR[cnt] = Serial2.read();
+  }
+  heading_F = atof(heading_STR); 
+  Serial.printf("heading = %f ", heading_F); 
+  //Serial.printf("headint str = %s", heading_STR); 
+  Serial.println(); 
+  Serial2.end(); 
+  //delay(1000); 
+  /*
+  heading_STR = Serial2.readString();
+  heading_F = atof(heading_STR); 
+  Serial.printf("heading = %f", heading_F); 
+  Serial.println(); 
+  
+   
+}
+*/
+//******************************************************************************************************// 
+/*
+void Course_Corret(void) 
+{ 
+  Serial.println("Correcting"); 
+  //heading_L = heading_F; 
+  //Read_GPS();
+  bool Correct = false;  
+  L_A_GLOB = 0; 
+  R_A_GLOB = 0; 
+  while(!Correct) 
+  {
     attachInterrupt(Pin_LA, L_A_ISR, RISING);
 
     attachInterrupt(Pin_RA, R_A_ISR, RISING);
-
-    L_A_GLOB = 0;  
-
+    
+    Serial.println("loop reset"); 
+    Read_GPS();
+    Serial.printf("H_L = %f, H_F = %f", heading_L, heading_F); 
+    Serial.println(" "); 
+    //heading_L = heading_F; 
+    L_A_GLOB = 0; 
     R_A_GLOB = 0; 
-
-    // we have a choice here. we can either reset left and right wheel to medium speed each itteration, as we do here 
-    // OR we can not do that, under the assuption that the correction function find the correct speed for both motors, 
-    // and that they stay more or less true after the first correction cycle 
-    // may depend on variability of terrain over the current course. 
-
-    med_L = MED;  
-
-    med_R = MED; 
     
-  }
-  Left_F(MED); 
-
-  Right_F(MED); 
-  
-  
-   
-  //Reverse for right motor
-
-  
-
-  // at full speed 
-  //int Rotations = floor(dist/Rot_dist); // num of shaft rotations needed to travel dist;  
-
-  R_SE_CNT_GLOB = 0;    // reset for accurate tracking 
-
-  while ((R_SE_CNT_GLOB < Rotations))
-  {
-    
-    if (correction) 
-    { 
-      // couse correction. slow one wheel if the difference in rotation is greater than 1/12th 
-      // if correction is to aggresive / weak, can change either the delay we give the othwer wheel to catch up. 
-      // or the speed decrese for the offencting wheel 
-      if(abs(L_A_GLOB - R_A_GLOB) > 4)          // if we are off by more than 1/12th rotation between the 2 wheels
-      { 
-        if(L_A_GLOB > R_A_GLOB)                 // left wheel faster than right 
-        { 
-          med_L = med_L - 1;            // decreasing left wheel PWM by 1          
-          ledcWrite(1,med_L);  
-          delay(50);                    // giving right wheel time to catch up 
-          
-        }
-        else                                    // right wheel faster than left 
-        { 
-          med_R = med_R - 1;            // decreasing right wheel PWM by 1           
-          ledcWrite(2,med_R); 
-          delay(50);                    // giving left wheel time to catch up        
-          
-        }
-      }
-    }
-    
-    delay(10);    // used as NOP instruction here I feel like i should take this out, but I'm leaving it here cause that's what i last ran at 
-    //Serial.printf("On rot num %d ", R_SE_CNT_GLOB); 
-    //Serial.println("Going"); 
-       //delay(10);    // used as NOP instruction here 
-    Serial.printf("On rot num %d ", R_SE_CNT_GLOB); 
-    Serial.println("Going"); 
-    if ( (OBSTACLE)  & (!evading) )
-    {
-      Serial.println("Begin Obstacle Evasion Now"); 
-      Clear_Obstacle(); 
-    }
-    
-  
-
-  // coasting both wheels after we've compleated the straigh leg 
-
-  //Right_C(); 
-
-  //Left_C(); 
-
-  
-  if(correction)
-  {
-    detachInterrupt(Pin_LA);
-
-    detachInterrupt(Pin_RA);
-  }
-
-  }
-}
-//******************************************************************************************************// 
-// Stop Function 
-void Stop()
-{
-  //Serial.println("Stopping"); 
-  // dosen't fall out of loop. attempt to use I channel instead 
-  attachInterrupt(Pin_LA, L_A_ISR, RISING);
-
-  attachInterrupt(Pin_RA, R_A_ISR, RISING);
-
-  R_A_GLOB = 0;   // resetting ch a encoder counts  
-
-  L_A_GLOB = 0; 
-
-  //R_SE_CNT_GLOB = 0; 
-
-  //L_SE_CNT_GLOB = 0; 
-
-  L_last = 0;   // hold last encode value on channel A, so check if we've actully stopped 
-
-  R_last = 0; 
-
-  stopped = false;      // resetting bool 
-  
-  // stops mower 
-  // breaking by applying low power reverse 
-  // breaks Left Motor 
-  Right_R(STOP); 
-  
-  Left_R(STOP); 
-
-   
-
-  ind = 1;              // incrementally boosts reversing power 
-
-  while((!stopped) & (ind <= 15)) // 
-  { 
-    L_last = L_SE_CNT_GLOB;    // last SE- ch A count becomes current CH- A count for both wheels 
-
-    R_last = R_SE_CNT_GLOB; 
-
-    ind++;                // seems to not fall out of loop. adding this to make sure it does 
-
-    delay(100);           // delay by 0.1 seconds. assumption is that if we have not moved at least 1/48th of a rotation in 0.1 seconds we are stopped 
-
-    if ((L_last == L_A_GLOB) & (R_last == R_A_GLOB))   // gave error margin of 3/48                                                   // possibly include error bound here? 
-    { // if both left and right wheel haven't moved more than 1/48th of a rotation in the last 0.1 seconds
-      // mower is stopped 
-      stopped = true; 
-     
-    }
-    
-    else if (correction)        // if course correction is active. Bool set at top 
-    {
-      if ((L_last == L_A_GLOB) && (R_last != R_A_GLOB)) 
-      { 
-        // left wheel stopped but right has not 
-        ledcWrite(2,STOP + (3*ind));  // progressivly increase reverse thrust on right wheel 
-        ind ++; 
+    if ((heading_L < heading_F)& (abs(heading_L - heading_F) > 7))
+    { // need to turn slighlt left 
+      while(R_A_GLOB < 7)
+      {
         
-      }
-      else if ((L_last != L_A_GLOB) & (R_last == R_A_GLOB)) 
-      { 
-        // if right wheel has stopped and left has not 
-        ledcWrite(1,STOP +(3*ind));   // progresivly increase reverse thrust on left wheel
-        ind ++; 
-      }
+        Right_F(TURN); 
+        Left_R(TURN_STOP);
+        Serial.println("Correcting right"); 
+      } 
+      Right_R(7); 
+      Left_F(7);
     }
-    
+    else if ((heading_L > heading_F) & (abs(heading_L - heading_F) > 7))
+    {
+      while(L_A_GLOB < 7)
+      {
+        
+        Left_F(TURN); 
+        Right_R(TURN_STOP);
+        Serial.println("Correcting right"); 
+      } 
+      Right_F(7); 
+      Left_R(7); 
+    }
+    else if(abs(heading_L - heading_F) <7)
+    { 
+      Correct = true; 
+      Serial.println("Course correct");
+      //delay(1000);
+      Right_R(7); 
+      Left_R(7); 
+    }
+      
   }
-
-  // if we have stopped, turn both motors off and detach interrupts 
-
   detachInterrupt(Pin_LA);
 
   detachInterrupt(Pin_RA);
-  
-  //Right_C(); 
-
-  //Left_C(); 
-
-  
 }
+*/
 
 //******************************************************************************************************// 
 // Turn Right Function 
@@ -766,7 +881,7 @@ void Turn()
   
   while(turning)      // L_A_GLOB has 48CPR, so 82/48 wheel rotations should be a 90 deg turn 
   {
-    /*
+    /*    Gyro based turning, uncommented as Gyro sensor fails to provide reliable data 
     
     float Ang_x_i = Ang_x;              // itial angle is last angle 
      
@@ -821,6 +936,35 @@ void Turn()
   
   // Stop(); moving to main  
 }
+// turing out
+//******************************************************************************************************// 
+// Go home function 
+void Go_Home(void) 
+{ 
+  int half_dist_rots = ((Leg0*100)/2) * ( 1/Rot_dist);    // rotations to travel to outside of box
+  /* mower should end up at the center, pointing the same direction it started 
+   *  so we turn 180 ( 90 deg twice), go half the distance of the box widht
+   *  turn 90 deg again, go along the outside until we reach our stating point 
+   *  and then turn 90 degs again to face the way we did when we started 
+   */
+
+  Turn(); // 180 turn 
+  Turn(); 
+  GoStraight(half_dist_rots); // half distance to reach outside 
+  Turn(); // 90 deg turn 
+  GoStraight(half_dist_rots); // back to start point 
+  Turn(); // algin to face the way we did when we started 
+  Stop(); 
+  // turn off motors 
+  digitalWrite(PinL_1, HIGH); 
+
+  digitalWrite(PinL_2, HIGH);
+
+  digitalWrite(PinR_1, HIGH);
+
+  digitalWrite(PinR_2, HIGH);
+}
+
 //******************************************************************************************************// 
 //******************************************************************************************************// 
 //******************************************************************************************************// 
@@ -1128,7 +1272,9 @@ void setup() {
 
     pinMode(O_ALERT, INPUT); 
 
-    attachInterrupt(O_ALERT, ODET, RISING); 
+    pinMode(Blade, OUTPUT); 
+
+    //attachInterrupt(O_ALERT, ODET, RISING); 
     
     // ISR on rising edge of interupt channel left 
     //attachInterrupt(Pin_LSE, L_SE_ISR, RISING); 
@@ -1142,6 +1288,8 @@ void setup() {
     //attachInterrupt(Pin_LA, L_A_ISR, RISING);
 
     //attachInterrupt(Pin_RA, R_A_ISR, RISING);
+
+    // IMU init, set and calibarte uncommen ted due to unreliable IMU sensors 
 
     //Wire.begin(); // begins I2C 
 
@@ -1433,6 +1581,7 @@ void loop() {
     *  May not work as we might need SE data from both wheels 
     */
    // can check course from GPS here to validate 
+   digitalWrite(Blade, HIGH);     // turn on blade 
    
  
 
@@ -1442,6 +1591,10 @@ void loop() {
     { 
       // NOTE: need to modify this with RTB and sleep code 
       Stop();     // stop the mower 
+      digitalWrite(Blade,LOW); // turn off blade 
+      Go_Home(); 
+      
+      
       while(1)
       {
         delay(1000);    // and wait in this loop forever 
