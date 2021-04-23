@@ -1,0 +1,13 @@
+This folder contains the code running the mower during the demo video. 
+2 sets of code are provided here: 
+
+1.) Code for the ESP 32: WIFI_Nav_1.4
+This code controlled the motors, provided navigation, connected to a wifi network, downloaded information from the App, and interfaces with obstacle detection 
+
+2.)Code for PIC 32: NAME 
+This code was intended to read GPS and interface with frint and side obstacle detection, and report the results to the ESP via serial. 
+Due to time constraints and other issues, this code only read the front sensor array, and alerted the ESP via GPIO pin. 
+Other functionality was left in the code, but commented out. 
+
+
+For full descritptions of the codes, see comments on top of respective codes, and their respective README files 
