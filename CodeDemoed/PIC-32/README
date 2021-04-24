@@ -1,1 +1,29 @@
 README for PIC-32 demo Code
+Written by Max Lesser 
+This section includes the code running on the PIC-32 during demo 
+the full project is included in a sub folder in this directory, but relevant source code is here 
+
+Summary: 
+the PIC-32 controlls obstalce detection and GPS. it reads the sensor array, finds min distance to obstacle, and alerts the ESP-32. 
+It also reads the GPS module and parses the revceived sentance for relvant data. And can send this to the ESP via UART. 
+It also includes a side obstacle detection function 
+
+Comments: 
+As I had to rebuild the entire Motor subsystem and nav code at the very end of the semester, along with general integration of the mower,
+i was not able to implement some of this functionality. The code on the PIC all works as intended, i just did not have the time to 
+make use of everything on the ESP. 
+
+
+Contents
+
+ObjectDetect: 
+can read front and side sensors, find side of mower obstacle is on and minimum distance. can report to ESP via UART. 
+implemented as: 
+reads front array only, alerts ESP via alert pin. 
+
+sensor_read 
+configures and reads from GPS module. And parses received sentence. Can send to ESP via UART. 
+impelemnted as: 
+attempted to use GPS course reading to correct course on ESP, did not work due to slow update rate, and the fact that the mower needs 
+to be moving in order to get an accurate reading of the course. 
+Therefore not used during final demo. 
