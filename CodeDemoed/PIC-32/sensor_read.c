@@ -4,17 +4,19 @@
  * contains: 
  *  read GPS 
  * init gps 
- * read Ultrasonic sensors 
+ 
  * 
  * and delay functions 
  * 
+ depends on 
+ sensor_read.h 
 
   @Company
  ECEN403-904 
  * Max Lesser 
 
   @Summary
-    Brief description of the file.
+    Files to read and parse sensors other than obstacle detection involved sensors 
 
   @Description
     Describe the purpose of this file.
@@ -29,7 +31,7 @@
 
 /* This section lists the other files that are included in this file.
  */
-#include "sensor_read.h"
+#include "sensor_read.h"      // holds all dependencies  
 
 
 
@@ -213,7 +215,7 @@ int DelayMs(unsigned long int msDelay)
         // And have enough left in the buffer to find the data we need 
         
         
-       
+       //*****************************************************************************************************************************//
         while( (need_type) && (cnt1<=190) )                 // loop looking for NEMA identifier 
         {
             if( Read_buffer[cnt1] == '$')                   // marks beginning of NEMA sentence
@@ -221,8 +223,8 @@ int DelayMs(unsigned long int msDelay)
                 while ( Read_buffer[cnt1] != ',')           // looping through id field 
                 {
                     NEMA_Type[cnt] = Read_buffer[cnt1]; 
-                    cnt1++;  
-                    cnt++; 
+                    cnt1++;                                 // need to incriment seperate counts, one for whole received buffer  
+                    cnt++;                                  // and one for the NEMA type varible 
                 }
                 if ( (strcmp(NEMA_Type, RMC_sen) == 0))     // removed as we stoped using GGA | (strcmp(NEMA_Type, GGA_sen) == 0 ))
                 {
@@ -239,7 +241,8 @@ int DelayMs(unsigned long int msDelay)
             {
                 cnt1++; 
             }
-        }  
+        } 
+      //*****************************************************************************************************************************//
         
         /*
          * 
@@ -320,6 +323,21 @@ int DelayMs(unsigned long int msDelay)
         }
         // END OF RMC PARSER 
         // we have now extracted all the data we need from an RMC sentence 
+      //*****************************************************************************************************************************//
+      //*****************************************************************************************************************************//
+      /*NOTE: 
+      // We intended to send all or part of this data to the Navigation MCU, to use in Nav
+      // I never received any specifics on how to format, and at the end i had to 
+      // compleatly rewrite NAV code and rebuild Motor subsystem from scratch 
+      // As well as the vast majority of hardware integration (Vincent helped me on mutliple occasions, 
+      // and Josh helped for an afternoon) 
+      // I did not have time to incorporate this into my frantic rewrite of NAV code. 
+      // this code on the Pic thouhg works, and I did use it to read cource from the GPS onto the ESP 
+      // in an attempts to correct NAvigation errors. The slow update rate of the GPS, and the fact that no time
+      // was remaining in the semester at that point prevented me from successfully using GPS info for course correction 
+      */ 
+      //*****************************************************************************************************************************//
+      //*****************************************************************************************************************************//
         
        // Latitude filed 
 //        UART5_Write(lat,9); 
@@ -347,9 +365,13 @@ int DelayMs(unsigned long int msDelay)
     
         
         
-       
+
+      //*****************************************************************************************************************************//
       
-    /* from 403, issues fixed, left here incase issues return 
+    /* UPDATE: final state: this code works. below left as resource 
+     * 
+     *
+     * from 403, issues fixed, left here incase issues return 
      * GPS read function works 
      * We are having issues with the GPS module not sending data, 
      * // not getting a position Fix 
