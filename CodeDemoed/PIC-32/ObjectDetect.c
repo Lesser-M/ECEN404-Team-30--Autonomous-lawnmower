@@ -2,13 +2,15 @@
 /** Descriptive File Name
 
   @Company
-    Company Name
+   written for TAMU ECEN Capstone F2020-S2021 By Max Lesser
 
   @File Name
-    filename.c
+    ObjectDetect.c
+    depends on ObjectDetect.h
 
   @Summary
-    Brief description of the file.
+    Triggeres front and side array, converts Sensor TOF signals to distances
+    alerts ESP32 of discovered obstacles via GPIO, and optional Serial
 
   @Description
     Describe the purpose of this file.
@@ -244,7 +246,7 @@ int Read_Front_Array(struct Reading R1, struct Reading R2, struct Reading R3, st
                         TmrLoopCheckL = 0; 
                     }
                     if (TMRLoops >= 3)  // made this 3 to account for propagation delays 
-                    {                   // don't think that's the issue, but don't want to chase it if it is
+                    {                   
                         stuck = true;
                 
                     }    
@@ -314,18 +316,19 @@ int Read_Front_Array(struct Reading R1, struct Reading R2, struct Reading R3, st
         
         // calculating distance from timer ticks, see function description for formula  
         float distance1 = (dif_S1)*0.01088; // ToF in ms * Vsound in M/s * (1/1000)[s/ms]*(100[cm/M])
-        float distance2 = 169.0 + (0.0000001* dif_S2); //dif_S2 * 0.01088;  // sensor was reporting wrong, eliminated  
+        float distance2 = 169.0 + (0.0000001* dif_S2); // sensor failed during testeing, an would report 8cm under all conditions. to prevent miss trigger, disabled it  
         //float distance3 = dif_S3 *0.01088; 
         float distance4 = dif_S4 * 0.01088; 
         float distance5 = dif_S5 * 0.01088;
-        float distance3 = 169.0 + (dif_S3*0.0000001); // sensor was reporting wrong, eliminated  
+        float distance3 = 169.0 + (dif_S3*0.0000001); // see distance 2, excpet this sensor would report > 16M, which caused a stuck error  
         // we include the stuck variable from the sensor reading loops above 
         // in the initial validation here 
         // if the loop got stuck at any time, we want discard all meassuremnts 
         
         stuck = false; // was used as timer error check, but sensor issues are causing error
         // by setting to false we just use the lowest sensor reading, 
-        // without validating 
+        // without validating, needed a quick fix during demo time 
+        // for nomral opperation this section validates. If the timer loop is stuck/ distance exceeds max possible sensor reading we assign it 0
         if ((distance1 <=400)&(!stuck))
         {
             R1.dist = distance1; 
@@ -366,7 +369,7 @@ int Read_Front_Array(struct Reading R1, struct Reading R2, struct Reading R3, st
         {
             R5.dist = 0.0; 
         }
-        // for debug only, let's us see when the sensor real loop(s) freeze 
+        // for debug only, let's us see when the sensor read loop(s) freeze 
         /*
         if(stuck)
         {
@@ -375,7 +378,7 @@ int Read_Front_Array(struct Reading R1, struct Reading R2, struct Reading R3, st
             R1.dist = 400.0;                    // had some crashes that printed "STUCK" right before crash  
             R2.dist = 400.0;                    // incase this is from caused by 0 distance inputs 
             R3.dist = 400.0;                    // I'm writing 400 to all values here 
-            R4.dist = 400.0; 
+            R4.dist = 400.0;                    // defeated, was continouly triggered due to sensor failures during demo time. 
             R5.dist = 400.0;            
                     
         }
@@ -385,46 +388,34 @@ int Read_Front_Array(struct Reading R1, struct Reading R2, struct Reading R3, st
         R3.senNum = 3; 
         R4.senNum = 4; 
         R5.senNum = 5; 
-        //float distance = distance1+distance2+distance3+distance4+distance5;
-        detect(R1,R2,R3,R4,R5);
+        
+        detect(R1,R2,R3,R4,R5);       // calls detect function, finds min distance and side of obstacle 
         return 0; 
         /* Sensors are not returning valid data. 
          Suspect Hardware issue
          Worked during first array test. But once array was installed on the mower
-         distance data is no longer valid, and timer loop runs more than twice */
+         distance data is no longer valid, and timer loop runs more than twice 
+         Had to disable some sensors and safties at demo time inorder to get it opperational*/
     }
+
+/******************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
+
 
 int detect(struct Reading F1, struct Reading F2, struct Reading F3, struct Reading F4, struct Reading F5)
 {
-        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    /*
-    CONVENTIONS AND IMPORTANT REFERENCES USED IN THIS CODE (later to be ammended with high level summar)
-    For calculation of obstacles 4 intermediate variables are used
-
-
-    CONVENTION 
-    angle given with normal line as obstacle desription is referenced such that an obstacle to the right of the 
-    center of the mower is reported with a negative angle, while objects to the left are given with a postive angle 
-    the angle itself is referanced to the normal line ( ie an obsacle directly infront of the mower would be reported 
-    with an angle of 90 deg. while obstacles moving away from dead center have decreasing magnitude of angle 
-    lower bound to be established )
-    */
+   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   /* There are 2 versions of this function. the first one calculates angle to obstacle and minimum distance using trig
+   * during testing it was discovered that the sensor readings are not accurate enough for this to be usefull. 
+   * the second version uses minium sensor distance as minimum distance, and side the sensor is on as side the obstacle is on. 
+   * Obstacle side was not used during navigation, as it seemed prudent to only ever turn towards the inside. preventing run-ins with 
+   * Outside walls/obstacles. And to be able to track an obstacle using side sensors. See below for side sensor details. 
+   */ 
+  
     
-
-
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //KNOWN ISSUES //KNOWN ISSUES //KNOWN ISSUES //KNOWN ISSUES //KNOWN ISSUES //KNOWN ISSUES //KNOWN ISSUES //KNOWN ISSUES 
-    // need to classify multiple objects as area objects
-    //
-    // Establish max/min values and check for those? currentyly only grouped by region, do we need aditional grouping/validation? 
-
-    // simulating sensor readings, to be replaced with actual readings when implemented 
-
-    // What when we only have one distance reading in a resoltuion zone
     
 // Trying something simpler 
     /* The code below was written to simplify obstacle detection 
@@ -585,6 +576,7 @@ int detect(struct Reading F1, struct Reading F2, struct Reading F3, struct Readi
 //        }
 //        
 //    }
+    // finds side on which the obstacle is. Not used in ultimate demo, as we defaulted to always trun inward. see top of function or report for details 
     // converting numbers to strings so we can send via UART 
     char dist[3];                       // distance  
     char sideC[2];                      // what side we are on ( R, L, S)
@@ -610,10 +602,14 @@ int detect(struct Reading F1, struct Reading F2, struct Reading F3, struct Readi
      
     // Outputting results, with (adjustable) delays 
     // may want to convert this into one string 
+    /* Original output was a UART string with distance and side. It later became appreant that this information 
+    * is not entirely needed, and would slow down opperation of the ESP 32. we instead use an alert pin 
+    * to inform the ESP of an obstacle. See report for details on this decision 
+    */ 
     char output[9]; 
     memset(output, ' ', 9);
     
-    if (min.dist <40)        // changed min to R1
+    if (min.dist <40)        // threshold 
     {
         // outputting only when object within 80cm, 
         // as per NAV-MCU config 
@@ -653,7 +649,36 @@ int detect(struct Reading F1, struct Reading F2, struct Reading F3, struct Readi
      */
 
     
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // THIS CODE NOT USED DUE TO SENSOR INACCURACY, SEE TOP OF FUNCTION 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /*
+    CONVENTIONS AND IMPORTANT REFERENCES USED IN THIS CODE (later to be ammended with high level summar)
+    For calculation of obstacles 4 intermediate variables are used
+
+
+    CONVENTION 
+    angle given with normal line as obstacle desription is referenced such that an obstacle to the right of the 
+    center of the mower is reported with a negative angle, while objects to the left are given with a postive angle 
+    the angle itself is referanced to the normal line ( ie an obsacle directly infront of the mower would be reported 
+    with an angle of 90 deg. while obstacles moving away from dead center have decreasing magnitude of angle 
+    lower bound to be established )
+    */
     
+
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //KNOWN ISSUES //KNOWN ISSUES //KNOWN ISSUES //KNOWN ISSUES //KNOWN ISSUES //KNOWN ISSUES //KNOWN ISSUES //KNOWN ISSUES 
+    // need to classify multiple objects as area objects
+    //
+    // Establish max/min values and check for those? currentyly only grouped by region, do we need aditional grouping/validation? 
+
+    // simulating sensor readings, to be replaced with actual readings when implemented 
+
+    // What when we only have one distance reading in a resoltuion zone    
     
     
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1027,7 +1052,9 @@ int detect(struct Reading F1, struct Reading F2, struct Reading F3, struct Readi
 //            UART5_Write("\n\r", 2); 
 //        }
 //    }
-//    
+//  
+  /******************************************************************************/
+  /******************************************************************************/
     return 0; 
 
 }
@@ -1052,6 +1079,11 @@ ASSUMES     Side1 is towards front of mover and Side2 is to rear
  * ////// THESE ASSIGMNETS WERE NOT YET TESTED DUE TO POWER OUTAGE 
  * Function cleans and builds but is not validated beyond that due to power outage 
  * Needs additional comentes for clarity, Defer process to later when power comes back 
+ * 
+ * Function now tested. 
+ * Not implemented on mower, due to time constraints. 
+ * Hardware is in place, but issues around me having to rebuild the enitre motor and Nav subsystem prevented me from 
+ * implementing this in a meanigfull way 
 */ 
 
 // struct to hold sensor readings, Dummy for now 
@@ -1074,8 +1106,7 @@ ASSUMES     Side1 is towards front of mover and Side2 is to rear
     
     // Pin 113 RD13 for front side sensor 
     // Pin 115 RJ1 for read side sensor 
-    /******************************************************************************/
-    // NEEDS IT'S OWN TRIGGER 
+   
     /******************************************************************************/
     GPIO_RD13_InputEnable(); 
     GPIO_RJ1_InputEnable(); 
@@ -1180,7 +1211,7 @@ ASSUMES     Side1 is towards front of mover and Side2 is to rear
     // validating incase TMR loop 
     int Side1diff = 0; 
     int Side2diff = 0; 
-    
+    // timer ticks for both sensors 
     if (Side1_Start < Side1_End)
     {
         Side1diff = Side1_End - Side1_Start; 
@@ -1200,7 +1231,7 @@ ASSUMES     Side1 is towards front of mover and Side2 is to rear
     
     struct Reading Side1; 
     struct Reading Side2; 
-    
+    // distances and reading structs of both sensor readings 
     float Side1Dist; 
     float Side2Dist; 
     Side1Dist = Side1diff * 0.01088;
@@ -1226,8 +1257,8 @@ ASSUMES     Side1 is towards front of mover and Side2 is to rear
     
     
     
-// sensor seperation. needs correct value when physically implemented /////////////////////////////////////////////////////////////////////
-    float Sep = 23.8; // on unit
+
+    float Sep = 23.8; // meassured on unit
 
 
 
@@ -1265,6 +1296,7 @@ ASSUMES     Side1 is towards front of mover and Side2 is to rear
         minDist = Side1.dist; 
         ang = 0.0; 
     }
+    // Formats output for UART sending. Not used, to conserve resources 
     // calculating anlge, using right triangle trig 
     ang = (180/3.141) * atan(distDiff/Sep);
     // Converting angle and distance to strings for sending 
@@ -1276,7 +1308,9 @@ ASSUMES     Side1 is towards front of mover and Side2 is to rear
     itoa(sidedist, minDist, 10); 
     ////////////////////////////////////////////////////////////////////////////
     // NOTE: ANGLE IS POSITIVE EITHER WAY (closing or not closing) , COORDINATE WITH JOSH FOR FORMATING 
+    // Narrator: There was no Josh 
     ////////////////////////////////////////////////////////////////////////////
+   // Alerting ESP when obstacle is closer then 50 cm 
     if (minDist < 50)
     {
         GPIO_RF2_Set(); 
@@ -1285,7 +1319,7 @@ ASSUMES     Side1 is towards front of mover and Side2 is to rear
     {
         GPIO_RF2_Clear(); 
     }
-    /*
+    /* reverted to alret pin instead of UART, to not over extend the ESP with UART read opperations 
     UART5_Write("min dist: ", 10);
     DelayMs(50);
     UART5_Write(sidedist, 3); 
@@ -1312,6 +1346,9 @@ ASSUMES     Side1 is towards front of mover and Side2 is to rear
     return 0; 
 
 }
+/******************************************************************************/
+// Functions used in accurate obstacle detection. This was not used during demo as 
+// sensor inaccuracy yieled unacceptabel results 
 /******************************************************************************/
 float CalcAng (struct Reading OValid[5], int cntDet )
 {
