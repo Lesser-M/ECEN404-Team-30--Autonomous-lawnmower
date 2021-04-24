@@ -12,7 +12,7 @@ Sponsor: Stavros Kalafatis
 404 TA: Ahmad Darwash 
 404 Professor: J. Lusher
 
-Probelm Statement from Sponsor: 
+Problem Statement from Sponsor: 
 " You will start with a lawn mower shell, add motors to propel the wheels, microcontroller to control everything, 
 comms to a wifi network where area to be covered and route will be entered, and a power mechanism (docking station or other)”
 
