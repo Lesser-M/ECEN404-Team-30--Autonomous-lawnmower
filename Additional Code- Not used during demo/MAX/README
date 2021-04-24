@@ -1,1 +1,29 @@
 code written by Max that did not run on the mower during demo 
+
+Accel_Gyro_Compass: 
+code used to read compass and try to get compass heading for NAV 
+compass heading varried by +- 60 deg without ever moving the unit or activating motors. 
+Concluded issue in sensor, and did not implement for this reasson 
+
+Nav_code_Lesser_New_driverts_GPS_ODET 
+Edit of nav code, for new driver boards, that included obstacle detection and GPS 
+large portions of this code were copied into the code that ran during demo. 
+this code attempted to read GPS to correct course, but due to low refresh rate of GPS module ( >1Hz) 
+and the fact that couse information from the GPS would not be usefull unless the mower was moving forward. 
+This approach did not work. ( ie we can't take enough points along a path to get a course. and i did not have 
+the time at the end to truly work out a way where we can take a single GPS course reading while underway, given that 
+update reate is less than once pre sec) 
+
+Nav_code_Lesser_New_driverts_Gyro
+Similar version as above, but attempting to use gyro to help turn better. 
+Issues with the Gyro prevented this from working ( see Accel_Gyro_Compass section) 
+many parts of this code did land in the code we used during demo 
+
+capstone.c 
+intial prototype for obstacle location code. 
+Not used as sensors were to incaccurate to work well with this code. 
+Many parts of this code did make it into the PIC-32 ObjectDetect code 
+
+
+
+
