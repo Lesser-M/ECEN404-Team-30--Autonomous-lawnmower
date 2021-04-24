@@ -1,1 +1,33 @@
 README for ESP-32 Demo Code 
+Written by Jonathan and Max 
+
+Summary: 
+The ESP32 controlls naviagtion, and interfaces with the User via WIFI. Jonathan wrote the WIFI commponets, Max wrote the navigation componet. 
+Earlier versions of navigation code were written by Josh, see additional code/ JOSH directory for more information 
+//*****************************************************************************************************************************************************************************//
+NAVIGATION SUMMARY: 
+Navigation relies on the distanced of the outside legs of the box to be mowed, assuming all internal angles are 90 degrees. 
+it tracks the distanced moved using shaft encoders on both wheels. When it is alerted of an obstacle, it will evade that obstacle and return to the orignla path 
+Comments: 
+some sensors failed, incudling the left wheel shaft encoder. for this reasson i had to swtich to timer based obstacle evasion, and use only the right wheel during tracking. 
+It also forced us to turn to the left only. 
+
+In an attempt to correct course I tried to use the GPS readings from the PIC, however as we need to move in order for the course reading to be accurate, 
+and GPS update rate is 1Hz, this did not work out.
+
+I also tried to use a GYRO to meassure the angle through which we truned, but an issue with the sensor resulted in us getting 0 /NaN output from the gyro when mounted on the 
+mower. Did not have the time to further investigate the issue/ obtain a replacement gyro. 
+
+Also tried to use a magnotomerter to find our heading, however the readings reported by the code varried by +- 60 degrees without the sensor moving at all. The code was not 
+incorporated into navigation for this reasson. It is presented in the Additional Code/MAX directory. 
+This also furhter suggests a faulty GYRO sensor, as the Gyro and magnotometer were on the same unit. 
+
+Implementation
+motor controll functions set the motors to go forward or backwards. We then have a go straight, turn and stop function. 
+once we have leg distances, we go straight, turn, . . .  until we have compleated a loop around the outside. After the first loop we decrement the 
+leg distance by one motor rotation ( ~21cm), and do another recangle, until we reach the middle. 
+The code also controlls the blade motor, which is started at the beginngin, deactivated for obstacle evaion, and then finally shut down after the track is compleated.
+The NAv function is controlled by a BOOL set by the user, and allows the user to start/stop the mover via the app. see User interface for detail. 
+
+//*****************************************************************************************************************************************************************************//
+USER INTERFACE SUMMARY: 
