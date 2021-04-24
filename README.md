@@ -1,37 +1,56 @@
 # ECEN404_MCU
-MCU code for senior desgin project
+Project wide Readme
+**************************************************************************************************************
+***Project info:***
+Project Title: Autonomous Lawnmower 
+Team Number: 30 
+Team Members: Max Lesser, Vincent McMasters, Joshua Samaniego, Jonatahan Pouluse 
+Sponsor: Stavros Kalafatis 
 
-README OUT OF DATE 
-some nav code added. will update soon 
+403 TA: Pranav Duphila 
+403 Professor: S. Kalafatis 
+404 TA: Ahmad Darwash 
+404 Professor: J. Lusher
 
-Code for use on the PIC32MZ-2048-EFH-144 Microcontroller used for this project. 
-TODO: 
-get region specifiactions from josh and configure alert pin. 
-Get final message format from josh ( commas, whitespaces, <CR><LF>) 
- where and if to put them. 
+Probelm Statement from Sponsor: 
+" You will start with a lawn mower shell, add motors to propel the wheels, microcontroller to control everything, 
+comms to a wifi network where area to be covered and route will be entered, and a power mechanism (docking station or other)”
 
-Includes obstacle detection for front and side, as well as GPS. 
-Is to include alert pin. 
+**************************************************************************************************************
+***GITHUB structure*** 
+This Repository contains all of our final reports, code and any other items we are submitting in relation to the final report. 
+The repo contains the following folders and sub folders, with purpose as listed below
 
-Pin will set high if an object is within a specified distance, or if the mower is closing on an object on the side 
-within a specifed distance. Not yet implemented, as we are awaiting the region bounds from josh and navigation. 
+-CodeDemoed: Contains the code running on the mower at demo time 
+          -/APP-Code: Contains the code for the app running the user interface 
+          -/ESP-32: contains code running on ESP32 at demo time, nameley code for Navigation and to interface with the User via wifi network 
+          -/PIC-32: Contains code running on the PIC-32 during demo time, Nameley code for obstacle detection 
+          -/Server: contains any code running on the server needed to connect the ESP32 to the User interface 
+-Additiona Code- Not used during Demo: contains code written for this project that was not implemnted at demo time 
+          -/JONATHAN: code written by Jonatahn that was not used during demo time 
+          -/JOSH: code written by Josh that was not used during demo time 
+          -/MAX: code written by max that was not used during demo time 
+-Reports-404: contains all written Reports for this semester 
+-Videos: contains demo video, and other video or picture that is relevant but not included in the report 
+
+each of these directories has a README file expalining it further, along with the purpose of any child directories not mentioned here
+The README shall clearly state who is responsible for the code. Detailed explanations are reserved for the report in the Reports-404 section 
+
+        
+
+**************************************************************************************************************
+***Project Summary***
+We used an old lawnmower shell, stripped it of all its parts, added Motors, powersupply, wiring, Microcontroller and sensors to it to achive our mission. 
+
+The code presented here is for 2MCUs, the PIC-32 used for GPS and obstacle detection, as well as the ESP32 used for user interface and Navigation.
+Additionally presented is Code for the app, and other interface structure, along with code developed for this project but not used during demo. 
+
+As the main project report is presented elsewhere, we will not go into detail here, but instead refer the reader to the READMEs in the appropriate sections, and the Report 
 
 
-Front Obstacle detection: 
-Code triggers and read array of 5 sensors, aimed towards the front of the mower. 
-It then determines which senser returns the shortest distance, and what side of the mower this sensor is on (left, right or center). 
-It then reports out, via UART, the shortest distance to the object, as well as the side of the mower the object is on. 
-All directions are referenced to the drive direction of the mower (ie the direction an observer sitting on the front of the mower would look)
-All distances used herein are in cm. 
 
-Side detection: 
-works similar to front, as that it triggers all it's sensors, and then reads the distances. Uses only 2 sensors. 
-One towards the front of the mower, and one towards the rear. It gets distances from both, and then calcualtes the 
-minimum distance to an object on the left side of the mower, as well as if the mower is closing to that object, 
-or moving away from it. 
-Reports out, via UART,  minimum distance, as well as closing/not closing. 
 
-GPS 
-Configures GPS module to send RMC type nema sentence every second. 
-Parses that sentence for lattitude, longitude, course and speed. 
-Reports all out via UART 
+
+
+
+
