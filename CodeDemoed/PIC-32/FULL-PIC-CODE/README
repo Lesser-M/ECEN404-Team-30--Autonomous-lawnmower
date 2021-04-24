@@ -1,0 +1,4 @@
+Includes entire Harmony project for PIC-32, including all soruce code in parent direcotry, as well as config code/ hardware config etc. 
+Here for compleatness sake, not intended for review. (although you are welcome to, but the interesting stuff is in the parent direcotry) 
+
+Note: source files in parent directory are functionally the same as here, but with slighlty updated comments 
