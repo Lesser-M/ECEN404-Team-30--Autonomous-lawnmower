@@ -24,6 +24,15 @@ intial prototype for obstacle location code.
 Not used as sensors were to incaccurate to work well with this code. 
 Many parts of this code did make it into the PIC-32 ObjectDetect code 
 
+NAV_CODE_Lesser_edit2 & NAV_CODE_lesseredit_ODET
+Previous versions of Nav code that formed the basis for other code here and that used during demo 
+
+NOTE: 
+protions of Nav code were built upon pin declaractions and configurations josh previoulsy wrote. 
+the code retained from Joshes version in any of the above versions is in no case more than 30.  
+For an exact breakdown of who wrote what portion of the code is done for the code used during demo.
+
+
 
 
 
