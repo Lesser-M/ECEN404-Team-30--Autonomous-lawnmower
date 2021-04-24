@@ -2,15 +2,16 @@
 Project wide Readme
 **************************************************************************************************************
 ***Project info:***
-Project Title: Autonomous Lawnmower 
-Team Number: 30 
-Team Members: Max Lesser, Vincent McMasters, Joshua Samaniego, Jonatahan Pouluse 
-Sponsor: Stavros Kalafatis 
+-Project Title: Autonomous Lawnmower 
 
-403 TA: Pranav Duphila 
-403 Professor: S. Kalafatis 
-404 TA: Ahmad Darwash 
-404 Professor: J. Lusher
+          -Team Number: 30 
+          -Team Members: Max Lesser, Vincent McMasters, Joshua Samaniego, Jonatahan Pouluse 
+          -Sponsor: Stavros Kalafatis 
+
+          -403 TA: Pranav Duphila 
+          -403 Professor: S. Kalafatis 
+          -404 TA: Ahmad Darwash 
+          -404 Professor: J. Lusher
 
 Problem Statement from Sponsor: 
 " You will start with a lawn mower shell, add motors to propel the wheels, microcontroller to control everything, 
