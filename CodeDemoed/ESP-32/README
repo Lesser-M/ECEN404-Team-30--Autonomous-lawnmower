@@ -5,7 +5,7 @@ Summary:
 The ESP32 controlls naviagtion, and interfaces with the User via WIFI. Jonathan wrote the WIFI commponets, Max wrote the navigation componet. 
 Earlier versions of navigation code were written by Josh, see additional code/ JOSH directory for more information 
 //*****************************************************************************************************************************************************************************//
-NAVIGATION SUMMARY: 
+***NAVIGATION SUMMARY*** : 
 Navigation relies on the distanced of the outside legs of the box to be mowed, assuming all internal angles are 90 degrees. 
 it tracks the distanced moved using shaft encoders on both wheels. When it is alerted of an obstacle, it will evade that obstacle and return to the orignla path 
 Comments: 
