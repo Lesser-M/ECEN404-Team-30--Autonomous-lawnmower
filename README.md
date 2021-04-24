@@ -26,13 +26,16 @@ The repo contains the following folders and sub folders, with purpose as listed 
           -/ESP-32: contains code running on ESP32 at demo time, nameley code for Navigation and to interface with the User via wifi network 
           -/PIC-32: Contains code running on the PIC-32 during demo time, Nameley code for obstacle detection 
           -/Server: contains any code running on the server needed to connect the ESP32 to the User interface 
+------------------------------          
 -Additiona Code- Not used during Demo: contains code written for this project that was not implemnted at demo time 
           -/JONATHAN: code written by Jonatahn that was not used during demo time 
           -/JOSH: code written by Josh that was not used during demo time 
           -/MAX: code written by max that was not used during demo time 
+------------------------------            
 -Reports-404: contains all written Reports for this semester 
+------------------------------  
 -Videos: contains demo video, and other video or picture that is relevant but not included in the report 
-
+------------------------------  
 each of these directories has a README file expalining it further, along with the purpose of any child directories not mentioned here
 The README shall clearly state who is responsible for the code. Detailed explanations are reserved for the report in the Reports-404 section 
 
