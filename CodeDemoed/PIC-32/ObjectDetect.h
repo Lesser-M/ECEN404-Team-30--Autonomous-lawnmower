@@ -2,25 +2,26 @@
 /** Descriptive File Name
 
   @Company
-    Company Name
+    Written for ECEN Capstone F2020-S2021 By Max Lesser  
 
   @File Name
-    filename.h
+    ObjectDetect.h
+    holds dependencies for ObjectDetect.c
 
   @Summary
-    Brief description of the file.
+    structs and dependecies for obstacle detection source code 
 
   @Description
     Describe the purpose of this file.
  */
 /* ************************************************************************** */
-#include <math.h>
+#include <math.h>           // for trig functions 
 
-#include "definitions.h"
+#include "definitions.h"    // pin defintions 
  
-#include "device.h" //#include <cp0defs.h> includes CP0 definitions, for reading core timer 
+#include "device.h"
 
-#include "sensor_read.h"
+#include "sensor_read.h"    // for delay functions 
 
 #include <stdio.h> // converts float to char 
 
@@ -62,6 +63,8 @@ int detect(struct Reading F1, struct Reading F2, struct Reading F3, struct Readi
 // performs actual obstacle detection, giving distance and angle, using above functions 
 
 int sideDetect(struct Reading S1, struct Reading S2); 
+// side facing array, reads 2 sensors on side, finds distance to side object
+// and if we're closing with it or not 
 
 int Read_Front_Array(struct Reading R1, struct Reading R2, struct Reading R3, struct Reading R4, struct Reading R5); // front facing US array read function 
 // reads 5 sensors in front facing array 
