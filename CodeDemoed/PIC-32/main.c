@@ -2,15 +2,21 @@
   Main Source File
  * so meine freunde
   Company:
-    Microchip Technology Inc.
+    Max Lesser For ECEN capstone F2020- S2021
 
   File Name:
     main.c
+    depends on sensor_read.c /h 
+               ObstacleDetect.c /h 
+               device headers and definitins  
 
   Summary:
     This file contains the "main" function for a project.
 
   Description:
+  
+  SUMMARY OF OPPERATION AT BOTTOM OF MAIN 
+  
     This file contains the "main" function for a project.  The
     "main" function calls the "SYS_Initialize" function to initialize the state
     machines of all modules in the system
@@ -26,13 +32,13 @@
 #include <stdbool.h>                    // Defines true
 #include <stdlib.h>                     // Defines EXIT_FAILURE
 #include "definitions.h"                // SYS function prototypes
-#include "sensor_read.h"
+#include "sensor_read.h"                // for GPS read functions 
 
 #include <stdio.h>
-#include "ObjectDetect.h"
+#include "ObjectDetect.h"               // Obstacle detection 
 
 
-                                        // only for code test purposes 
+                                        /
 
 // *****************************************************************************
 // *****************************************************************************
@@ -46,9 +52,14 @@ int main ( void )
     SYS_Initialize ( NULL );
     
     TMR3_Start();                                                               //Timer used for Front Obstacle detection 
-    //Init_GPS();                                                                 // Configures GPS to send GPRMC sentence every second
+    // GPS was commented out during demo as Nav 
+    // as ESP had no implemnation of GPS. 
+    // I did try to correct course using course info from GPS. this failed due to slow update rate 
+    // see sensor_read.c GPS function, PIC README, or report                                       
+    //Init_GPS();                                                               // Configures GPS to send GPRMC sentence every second
 
                                                                                 // Holds readings for 5 front facing sensors 
+    // Structs used in front obstacle detection 
     struct Reading R1;
     struct Reading R2;
     struct Reading R3;
@@ -56,14 +67,17 @@ int main ( void )
     struct Reading R5;
       
      
+     // Struct for side 
+     // Not implemented as all of NAV had to be rewritten 
+     // and i did not have the time to implement side detection 
+     // the code on the PIC does work                                     
     /*
     struct Reading Side1; 
     struct Reading Side2; 
      */
                                 // this is not the pin we think it is 
                                 // need to find other pin for side detect 
-    //GPIO_RF3_OutputEnable();    // 
-    //GPIO_RF3_Clear();           // alert threshold 80 cm 
+    
     
     GPIO_RF2_OutputEnable();    // NAV-MCU altert 
     GPIO_RF2_Clear();           // Threshold 80cm 
@@ -83,69 +97,43 @@ int main ( void )
         //BUILD AND DEPLOY IN DEBUG 
         
         Read_Front_Array(R1,R2,R3,R4,R5);                                       // Reads front sensors, and send obstacle distance
-                                                                                // and angle to NMCU via UART 5 
+                                                                                // to NMCU via UART 5 
         
-        //sideDetect(Side1, Side2); 
-        DelayMs(100);  // 1000 -> 100                                                        // Allows GPS to load, may be able to reduce
-        //read_gps();                                                             // Reads and parses GPS-NEMA sentence 
-        /* front array test code 
-        GPIO_RB12_OutputEnable(); 
-        GPIO_RB12_Clear(); 
-        GPIO_RB10_InputEnable();
-        GPIO_RB10_Clear(); 
-        DelayMs(100);
-        GPIO_RB12_Set();
-         
-        DelayUs(10); 
-        GPIO_RB12_Clear(); 
-        bool start = false; 
-        bool stop = false; 
-        float start_time = 0.0; 
-        float stop_time = 0.0; 
-        
-        while(!start)
-        {
-            if (GPIO_RB10_Get() == 1)
-            {
-                start_time = TMR3_CounterGet(); 
-                start = true;  
-                
-            }
-        }
-        while(start & (!stop))
-        {
-            if (GPIO_RB10_Get() == 0)
-            {
-                stop_time = TMR3_CounterGet(); 
-                stop = true; 
-                
-            }
-        }
-        float diff = stop_time - start_time; 
-        float dist = diff * 0.01088;
-        char out[8]; 
-        memset(out, ' ', 8); 
-        itoa(out,dist,10); 
-        if ((2<dist) & (400>dist))
-        {
-            UART5_Write("\n\r Great Success ", 17);
-            DelayMs(500); 
-            UART5_Write(out,8);
-            DelayMs(500); 
-        }
-        */ 
+        //sideDetect(Side1, Side2);                                             // sideDetection not implemented during demo, see above, and summary below 
+        DelayMs(100);  // 1000 -> 100                                           // Allows GPS to load, may be able to reduce
+        //read_gps();                                                           // Reads and parses GPS-NEMA sentence 
         
                                       
         //BUILD AND DEPLOY IN DEBUG 
         //BUILD AND DEPLOY IN DEBUG 
         //BUILD AND DEPLOY IN DEBUG 
+      
+      
+      
+        // SUMMARY OF OPPERATION FOR PIC-32 
         //
-        //
+        /* 
+        General summary: 
+        the Pic was originally inteneded as the sole MCU, but due to defects in the PCB, and a more dificult time 
+        in deleoping code we branced to using an ESP32 in addition to the pic. 
+        The Pic now performs obstalce detection and reading of GPS and transmits this to the ESP 
+        
+        GPS:
+        configures GPS module and parses RMC sentance. can send data to ESP 32 viar UART 
+        
+        Obstacle Detection 
+        Reads front and side array, and alerts ESP via alert pin 
+        
+        
         // Outputs lat, lon, speed, course to NMCU via UART5 
-        //  program freezes when it looses GPS lock 
-        // OR GPS sometimes causes program freeze. 
-        // did perform stamina test with gps for ~ 90 mintes. 
+        //  program freezes when it looses GPS lock     // fixed 
+        // OR GPS sometimes causes program freeze.      // fixed 
+        // did perform stamina test with gps for ~ 90 mintes. IN DEBUG MODE  
         // cause currently unknown
+        // program freeze prevented by disableing UART interrups
+        // and including loop controll to prevent sensor freeze from crashing PIC 
+        // 
+        // OLDER ISSUES : 
         // also, loss of power to sensors causes death by exception 
         // 3/1/21 ODET notes 
         /* Obstacle detection stalls when objects are to close, especially for multiple 
