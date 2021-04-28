@@ -1,5 +1,6 @@
 All code written by Josh not running on the mower at demo time  
 
-This is the original NAV code we implemented with the old motor subsystem.
+This folder includes the original NAV code we implemented with the old motor subsystem.
 It utilizes the shaft encoders and receives coordinates from Jonathan's MCU.
 We had timing issues with this code related to turning, so there was new NAV code that was created for the demo.
+Timer code was created soley based on distances as a backup.
