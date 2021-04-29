@@ -5,7 +5,7 @@ Project wide Readme
 -Project Title: Autonomous Lawnmower 
 
           -Team Number: 30 
-          -Team Members: Max Lesser, Vincent McMasters, , Jonatahan Poulose, Joshua Samaniego
+          -Team Members: Max Lesser, Vincent McMasters, Jonatahan Poulose, Joshua Samaniego
           -Sponsor: Stavros Kalafatis 
 
           -403 TA: Pranav Duphila 
