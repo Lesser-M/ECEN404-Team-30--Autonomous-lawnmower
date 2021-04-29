@@ -14,7 +14,7 @@ NAVMCU Folder Code:
     -Sends battery information/statistics to WiFi ESP
     -Recieves coordinates & start_status from WiFi ESP
 
-WiFiandNAVMCU Code: *THIS WAS THE CODE USED BECAUSE WE ENDED UP COMBINING THE ESP code together*
+WiFiandNAVMCU Code: *THIS WAS THE CODE USED BECAUSE I ENDED UP COMBINING MY WIFI CODE WITH MAX'S NEW NAV CODE*
     -Connects to Wifi for Firebase Server 
     -Receives coordinates,start_status,battery information/statistics from Firebase Server
     -Converts 4 coordinates into Distances
