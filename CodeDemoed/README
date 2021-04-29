@@ -5,7 +5,7 @@ This folder contains the code running the mower during the demo video.
 This code controlled the motors, provided navigation, connected to a wifi network, downloaded coordinates and start_status from Server/App, 
 converted coordinates into distances, sent battery info to server/App, and interfaces with obstacle detection 
 
-2.)Code for PIC 32: NAME 
+2.)Code for PIC 32: Multiple files  
 This code was intended to read GPS and interface with frint and side obstacle detection, and report the results to the ESP via serial. 
 Due to time constraints and other issues, this code only read the front sensor array, and alerted the ESP via GPIO pin. 
 Other functionality was left in the code, but commented out. 
