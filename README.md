@@ -27,7 +27,7 @@ The repo contains the following folders and sub folders, with purpose as listed 
 
           -/APP-Code: Contains the code for the android app connected to the server; APK file, Java Files, and XML Files 
           
-          -/ESP-32: contains code running on ESP32 at demo time, nameley code for Navigation, WiFi connectivity to get coordinates and start_status, sent battery info to server
+          -/ESP-32: contains code running on ESP32 at demo time, nameley code for Navigation, WiFi connectivity to get coordinates and start_status, coordinates to distances                       calculation, and sends battery info to server
           
           -/PIC-32: Contains code running on the PIC-32 during demo time, Nameley code for obstacle detection 
           
@@ -36,8 +36,7 @@ The repo contains the following folders and sub folders, with purpose as listed 
          
 -Additiona Code- Not used during Demo: contains code written for this project that was not implemnted at demo time; previous versions
 
-          -/JONATHAN: code written by Jonathan that was not used during demo time. This includes three folders. 
-                    NAVMCU
+          -/JONATHAN: code written by Jonathan that was not used during demo time. This includes folders with code that connects both ESPs together using WiFi as well as                         receiving/sending coordinates, start_status, and battery information to/from each other. 
           
           -/JOSH: code written by Josh that was not used during demo time 
           
