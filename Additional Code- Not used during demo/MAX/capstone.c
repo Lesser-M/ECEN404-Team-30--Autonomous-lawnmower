@@ -1,4 +1,6 @@
-
+/* Obstacle detection Prototype, calculating distance and angle 
+ * Implemented on Pic, but later modified due to sensor inaccuracy 
+ */ 
 #include <iostream> 
 #include <math.h>
 using namespace std; 
