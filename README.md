@@ -5,7 +5,7 @@ Project wide Readme
 -Project Title: Autonomous Lawnmower 
 
           -Team Number: 30 
-          -Team Members: Max Lesser, Vincent McMasters, Joshua Samaniego, Jonatahan Pouluse 
+          -Team Members: Max Lesser, Vincent McMasters, , Jonatahan Poulose, Joshua Samaniego
           -Sponsor: Stavros Kalafatis 
 
           -403 TA: Pranav Duphila 
@@ -22,20 +22,22 @@ comms to a wifi network where area to be covered and route will be entered, and 
 This Repository contains all of our final reports, code and any other items we are submitting in relation to the final report. 
 The repo contains the following folders and sub folders, with purpose as listed below
 
+
 -CodeDemoed: Contains the code running on the mower at demo time 
 
-          -/APP-Code: Contains the code for the app running the user interface 
+          -/APP-Code: Contains the code for the android app connected to the server; APK file, Java Files, and XML Files 
           
-          -/ESP-32: contains code running on ESP32 at demo time, nameley code for Navigation and to interface with the User via wifi network 
+          -/ESP-32: contains code running on ESP32 at demo time, nameley code for Navigation, WiFi connectivity to get coordinates and start_status, sent battery info to server
           
           -/PIC-32: Contains code running on the PIC-32 during demo time, Nameley code for obstacle detection 
           
           -/Server: contains any code running on the server needed to connect the ESP32 to the User interface 
          
          
--Additiona Code- Not used during Demo: contains code written for this project that was not implemnted at demo time 
+-Additiona Code- Not used during Demo: contains code written for this project that was not implemnted at demo time; previous versions
 
-          -/JONATHAN: code written by Jonatahn that was not used during demo time
+          -/JONATHAN: code written by Jonathan that was not used during demo time. This includes three folders. 
+                    NAVMCU
           
           -/JOSH: code written by Josh that was not used during demo time 
           
