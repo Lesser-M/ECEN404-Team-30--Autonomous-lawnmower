@@ -23,10 +23,10 @@ ALL
 - add additional material as needed 
 - finish and add reports 
 - fill in your master readme sections 
-Max : MCU Subsystem Report (DONE, pending ESP-W section), Motor Subsytem Report (DONE), ICD (pending formatting)
+Max : MCU Subsystem Report (DONE), Motor Subsytem Report (DONE), ICD (DONE)
 Vincent: Power Subsytem Report (DONE), Validation Plan (DONE)
-Jonathan: UI subsystem ( + UI code on ESP), ConOps (pending formatting)
-Josh: (old motor control code) FSR (pending formatting)
+Jonathan: UI subsystem ( + UI code on ESP), ConOps (DONE)
+Josh: FSR (DONE)
 
 To be done for review by 4/28 at 17:00 
 All reports elements to be done by 4/29 at 14:00 
@@ -34,19 +34,25 @@ EPS video to be done after formating on 4/29
 
 
 4/26/21
--Subsystem reports (MCU - ESP-W, UI still incomplete as of 23:48 4/28)
--ConOps (ethical challenges section, formatting still incomplete as of 23:48 4/28)
--FSR (formatting still incomplete as of 23:48 4/28)
--ICD (formatting still incomplete as of 23:48 4/28)
--Validation 
-  -Put validation plan graphic at front 
+-Subsystem reports
+  -Power Supply (DONE)
+  -MCU (DONE)
+  -Motors (DONE)
+  -User Interface
+-ConOps (DONE)
+-FSR (DONE)
+-ICD (DONE)
+-Schedule Title Page (DONE)
+-403 schedule pdf
+-404 schedule pdf
+-validation pdf
+-Validation (DONE)
   -go trough section by section and write a paragraph on how we did it. (DONE)
   -insert proof picture or video as appropriate (DONE)
--Formatting of entire report as single document
-  -consider this the warning for vince being extremely triggered about this
-  -tables of contents
-  -tables of figures
-  -tables of tables
-  -page numbering to include pdf's that need to be inserted
+-Formatting of entire report as single document (DONE)
+  -tables of contents (DONE)
+  -tables of figures (DONE)
+  -tables of tables (DONE)
+  -page numbering to include pdf's that need to be inserted (DONE)
 -EPS video (at the way bottom of the list) 
 
