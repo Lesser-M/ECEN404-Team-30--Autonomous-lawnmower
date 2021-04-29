@@ -5,12 +5,17 @@ Code written by Jonathan that did not run on the mower for the demo video.
 WIFIMCU Folder Code: 
     -Connects to Wifi for Firebase Server & Connects to Nav ESP
     -Receives coordinates & start_status from Firebase Server
+    -Recieves battery information/statistics from Nav ES
     -Sends battery information/statistics to firebase server
-    -Recieves battery information/statistics from Nav ESP
+    -Sends coordinates & start_status to NAV ESP
 
 NAVMCU Folder Code:
     -Creates WiFi Network so WiFi MCU can connect to it
     -Sends battery information/statistics to WiFi ESP
+    -Recieves coordinates & start_status from WiFi ESP
+    
+coordinates & start_status to NAV ESP
+
     
 
                 
