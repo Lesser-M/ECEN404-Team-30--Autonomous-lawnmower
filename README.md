@@ -46,7 +46,10 @@ The repo contains the following folders and sub folders, with purpose as listed 
 -Reports-404: contains all written Reports for this semester 
  
  
--Videos: contains demo video, and other video or picture that is relevant but not included in the report 
+-Videos: contains demo video, validation videos, and other videos recorded that is relevant to the report
+
+-PicturesandScreenshots: contains validation pictures & screenshots and other images recorded that is relevant to the report
+
  
  
 each of these directories has a README file expalining it further, along with the purpose of any child directories not mentioned here
