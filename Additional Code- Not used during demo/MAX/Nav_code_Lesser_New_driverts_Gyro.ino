@@ -1,7 +1,8 @@
 /*********************************************************************************/ 
 /*********************************************************************************/ 
 /*********************************************************************************/
-/* Basic navigation test code, with option for course correction 
+/* Attempted to use Gyro for Nav, but sensor seems defective  
+ * Basic navigation test code, with option for course correction 
  *  uses shaft encoders, PWM motor driver boad 
  *  
  *  written by max  
