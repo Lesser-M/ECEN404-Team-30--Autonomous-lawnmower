@@ -13,7 +13,7 @@ NAVMCU Folder Code:
     -Creates WiFi Network so WiFi MCU can connect to it
     -Sends battery information/statistics to WiFi ESP
     -Recieves coordinates & start_status from WiFi ESP
-    
+
 WiFiandNAVMCU Code: *THIS WAS THE CODE USED BECAUSE WE ENDED UP COMBINING THE ESP code together*
     -Connects to Wifi for Firebase Server 
     -Receives coordinates,start_status,battery information/statistics from Firebase Server
