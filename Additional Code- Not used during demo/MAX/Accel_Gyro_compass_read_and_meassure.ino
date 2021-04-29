@@ -1,4 +1,5 @@
 /*
+Portions of this code are copied form GitHub
 The sensor outputs provided by the library are the raw 16-bit values
 obtained by concatenating the 8-bit high and low magnetometer data registers.
 They can be converted to units of gauss using the
@@ -56,6 +57,7 @@ void setup()
 void loop()
 {
   
+  // Raw compas heading without Pitch or roll compensation 
   //mag.read();
 
   //snprintf(report, sizeof(report), "M: %6d %6d %6d",
@@ -78,7 +80,8 @@ void loop()
   bool turn = true; 
   */ 
 
-  /*
+  /* attempt at detecting 90 degree turn. 
+  // Partially works when sensor outputs valid data 
   while (turn) 
   {
     //float Ang_y_i = Ang_y; // current angle is previous angle + angle travled over last itteration 
@@ -120,6 +123,7 @@ void loop()
   }
   */
   
+  
   //Serial.printf("X ang = %f, Y ang = %f", Ang_y, Ang_x); 
   //Serial.println(" ");
   //Serial.println(" Compleated 90 deg"); 
@@ -132,6 +136,12 @@ void loop()
     imu.g.x, imu.g.y, imu.g.z);
     Serial.println(report);
     */
+   /////////////////////////////////////////////////////////////////
+  /* Attempting Pitch and roll compensated compass reading 
+  would output values varying by +- 60 degress when sensor was stationary. 
+  Suspect damaged sensor at this point
+  Equation used in this portion found on stack exchange 
+  */ 
     // acclerations in mili g 
     mag.read();
     float My = mag.m.y/6.842; 
@@ -142,9 +152,9 @@ void loop()
     float A_X = imu.a.x *0.061;     
     float A_Y = imu.a.y * 0.061; 
     float A_Z = imu.a.z * 0.061; 
-    float Pitch = 180*atan(A_X/(sqrt((A_Y * A_Y) + (A_Z*A_Z))))/3.141 ; 
-    float Roll = 180*atan(A_Y/(sqrt((A_X * A_X) + (A_Z * A_Z))))/ 3.141; 
-    float Yaw = 180*atan(A_Z/(sqrt((A_X*A_X) + (A_Y*A_Y))))/3.141; 
+    float Pitch = 180*atan(A_X/(sqrt((A_Y * A_Y) + (A_Z*A_Z))))/3.141 ;   // Roll 
+    float Roll = 180*atan(A_Y/(sqrt((A_X * A_X) + (A_Z * A_Z))))/ 3.141;  // Pitch 
+    float Yaw = 180*atan(A_Z/(sqrt((A_X*A_X) + (A_Y*A_Y))))/3.141;        // Yaw ( unaccurate due to nature of Yaw) 
     Serial.printf(" Pitch: %f, Roll : %f, Yaw : %f", Pitch, Roll, Yaw); 
     Serial.println(" "); 
 
@@ -152,12 +162,13 @@ void loop()
     float sin_roll = sin(Roll); 
     float cos_pitch = cos(Pitch); 
     float sin_pitch = sin(Pitch); 
-
+  
+    // Roll and pitch compensation 
     float MAG_X = Mx*cos_pitch + My*sin_roll*sin_pitch +Mz*cos_roll*sin_pitch; 
 
     float MAG_Y = My*cos_roll - Mz*sin_roll; 
 
-    float Heading = (180/3.141)*atan2(-MAG_Y, MAG_X); 
+    float Heading = (180/3.141)*atan2(-MAG_Y, MAG_X);   // compensated heading 
 
     Serial.printf(" Heading : %f", Heading); 
     Serial.println(" "); 
