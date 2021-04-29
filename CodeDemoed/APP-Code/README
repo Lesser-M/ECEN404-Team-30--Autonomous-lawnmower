@@ -1,1 +1,26 @@
-README for APP Demo code 
+Android Application:
+
+-Allowed user to login through Google Account
+  /as many google acccounts as you want
+  /saves information for each account
+-Allowed user to add multiple lawns using Google Maps API
+  /Select Default Lawn
+  /Select current location
+  /Unlimited points/corners for each lawn
+  /recorded coordinates and sent to server
+  /Numbered each corner from one to desired amount
+  /Add lawn name
+ -Scheduling
+  /Add time
+  /Days of the week
+  -Control of Lawnmower
+    /Start
+    /Stop
+    /Go Home
+    
+    
+XML files: Constructed layout of each page in app
+
+Java Files: Logic for all functions of app
+
+APK File: File used to run application on android
