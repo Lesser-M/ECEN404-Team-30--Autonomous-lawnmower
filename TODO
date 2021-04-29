@@ -1,8 +1,8 @@
 CODE THINGS 
 MAX: 
 -edit comments in additional code/MAX 
--edit readme in additona code/MAX DONE
--edit comments in DemoedCode/ESP32 nav portion for clarity DONE 
+-edit readme in additona code/MAX (DONE)
+-edit comments in DemoedCode/ESP32 nav portion for clarity (DONE)
 - rewrite master README, give sections to everyone to fill in DONE 
 
 JOSH: 
@@ -20,13 +20,13 @@ JONATAHN:
 REPORT THINGS 
 ALL
 - add videos as needed 
-- add aditionl material as needed 
+- add additional material as needed 
 - finish and add reports 
 - fill in your master readme sections 
-Max : Motor subsytem (new), ICD 
-Vincent: Power subsytem report (DONE), Validation Plan 
-Jonathan: UI subsystem ( + UI code on ESP) ConOps 
-Josh: Old motor subsystem, ( Old motor controll code)  FSR
+Max : MCU Subsystem Report (DONE, pending ESP-W section), Motor Subsytem Report (DONE), ICD (pending formatting)
+Vincent: Power Subsytem Report (DONE), Validation Plan (DONE)
+Jonathan: UI subsystem ( + UI code on ESP), ConOps (pending formatting)
+Josh: (old motor control code) FSR (pending formatting)
 
 To be done for review by 4/28 at 17:00 
 All reports elements to be done by 4/29 at 14:00 
@@ -34,16 +34,19 @@ EPS video to be done after formating on 4/29
 
 
 4/26/21
--Subsystem reports 
-  -figure and table reordering
--ConOps 
--FSR
--ICD
+-Subsystem reports (MCU - ESP-W, UI still incomplete as of 23:48 4/28)
+-ConOps (ethical challenges section, formatting still incomplete as of 23:48 4/28)
+-FSR (formatting still incomplete as of 23:48 4/28)
+-ICD (formatting still incomplete as of 23:48 4/28)
 -Validation 
   -Put validation plan graphic at front 
-  -go trough section by section and write a paragraph on how we did it. 
-  -insert proof picture or video as appropriate 
+  -go trough section by section and write a paragraph on how we did it. (DONE)
+  -insert proof picture or video as appropriate (DONE)
 -Formatting of entire report as single document
   -consider this the warning for vince being extremely triggered about this
+  -tables of contents
+  -tables of figures
+  -tables of tables
+  -page numbering to include pdf's that need to be inserted
 -EPS video (at the way bottom of the list) 
 
