@@ -1,4 +1,7 @@
-/* The intital declaration and setup of motor control pins (PinL1, PinL2, PinR1, PinR2, PinL and PinR)  
+/* Nav code for new motors, with obstacle dection , No wifi implementd. 
+ * Nav code demoed is based on this version 
+ * 
+ * The intital declaration and setup of motor control pins (PinL1, PinL2, PinR1, PinR2, PinL and PinR)  
  *  and PWM pins in this code was from a code snippet done by Josh Samaniego. as well as the setup of the 2 PWM channels  
  *  All other functionality, including remaing setup, ISRs, turn, stop, straight and obstacle aviodance function 
  *  as well as Main function written by Max Lesser. 
