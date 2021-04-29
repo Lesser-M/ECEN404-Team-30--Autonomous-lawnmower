@@ -1,7 +1,8 @@
 /*********************************************************************************/ 
 /*********************************************************************************/ 
 /*********************************************************************************/
-/* Basic navigation test code, with option for course correction 
+/* COde modified for new motor control logic 
+ * Basic navigation test code, with option for course correction 
  *  uses shaft encoders, PWM motor driver boad 
  *  
  *  written by max  
