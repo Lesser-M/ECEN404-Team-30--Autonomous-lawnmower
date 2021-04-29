@@ -114,35 +114,33 @@ char sb[10];
 // Navigation controll setup and varibles by ML 
 // lines followed by JS were written by JS 
 
-// the number of the PWM pin
+const uint8_t PinL_F  = 12;     // left forward PWM JS  
 
-const uint8_t PinL_F  = 12;  // left forward PWM JS  
+const uint8_t PinL_R  = 13;     // left reverse pwm  JS
 
-const uint8_t PinL_R  = 13;  // left reverse pwm  JS
+const uint8_t PinR_F  = 27;     // right forward pwm 
 
-const uint8_t PinR_F  = 27;  // right forward pwm 
+const uint8_t PinR_R  = 26;     // right reverse pwm  
 
-const uint8_t PinR_R  = 26;  // right reverse pwm  
+const uint8_t PinL_1  = 2;      // left motor forward enable  JS
 
-const uint8_t PinL_1  = 2;  // left motor forward enable  JS
+const uint8_t PinL_2  = 15;     // Left motor reverse enable  JS
 
-const uint8_t PinL_2  = 15;  // Left motor reverse enable  JS
+const uint8_t PinR_1  = 4;      // Right Motor Forward enbable JS
 
-const uint8_t PinR_1  = 4;  // Right Motor Forward enbable JS
+const uint8_t PinR_2  = 18;     // Right Motor Reverse Enable  
 
-const uint8_t PinR_2  = 18;  // Right Motor Reverse Enable  
+const uint8_t Pin_RSE = 19;     // Right SE indicator channel 
 
-const uint8_t Pin_RSE = 19;   // Right SE indicator channel 
+const uint8_t Pin_LSE = 5;      // Left SE indicator channel 
 
-const uint8_t Pin_LSE = 5;   // Left SE indicator channel 
-
-const uint8_t Pin_LA = 32;        // left ch a se pin 
+const uint8_t Pin_LA = 32;      // left ch a se pin 
  
-const uint8_t Pin_RA = 33;     // right ch A pin 
+const uint8_t Pin_RA = 33;      // right ch A pin 
 
-const uint8_t Blade = 25;     // Blade ctrl 
+const uint8_t Blade = 25;       // Blade ctrl 
 
-const uint8_t O_ALERT = 35;   // obstalce detection alert pin 
+const uint8_t O_ALERT = 35;     // obstalce detection alert pin 
    
 //******************************************************************************************************//                              
 // Global Vars for se indicator counts  
@@ -155,13 +153,13 @@ int R_A_GLOB = 0;      // right ch a
 //******************************************************************************************************// 
 // setting PWM properties
 
-const uint32_t freq = 5000;  JS
+const uint32_t freq = 5000;   //JS
 
-const uint8_t L_Channel = 1; // note channel 0 and 1 share frequencies JS
+const uint8_t L_Channel = 1;  // note channel 0 and 1 share frequencies JS
 
-const uint8_t R_Channel = 2; // note channel 2 and 3 share frequencies JS
+const uint8_t R_Channel = 2;  // note channel 2 and 3 share frequencies JS
 
-const uint8_t resolution = 8; JS 
+const uint8_t resolution = 8; // JS 
 
 //******************************************************************************************************// 
 // setting up constants 
@@ -174,13 +172,13 @@ const uint8_t CPR = 48;         // counts per revoltuion on ch A                
 // speed settings for different opperations 
 // number in comments were for fine tuning. left here for refeance 
 
-const uint8_t STOP = 7;        // base pwm setting for stopping 
+const uint8_t STOP = 7;           // base pwm setting for stopping 
 
 // settings on concrete 
 // start at 50
 // 10 -> 30 
 // 30 -> 60 
-const uint8_t TURN_STOP = 60;   // PWM setting to lock inside wheel. STOP speed insuficient for turn stop 
+const uint8_t TURN_STOP = 60;     // PWM setting to lock inside wheel. STOP speed insuficient for turn stop 
 
 // settings on concrete 
 // 170 -> 150
@@ -188,53 +186,53 @@ const uint8_t TURN_STOP = 60;   // PWM setting to lock inside wheel. STOP speed 
 // 170 -> 85
 // 100 -> 150
 // 130 -> 100
-const uint8_t TURN = 100;       // PWM setting for turning. to be applied to only one motor while the other is stopped. 
+const uint8_t TURN = 100;         // PWM setting for turning. to be applied to only one motor while the other is stopped. 
 
-const uint8_t SLOW = 64;        // slow speed setting 
+const uint8_t SLOW = 64;          // slow speed setting 
 
 // 100 -> 50
-const uint8_t MED = 70;        // medium speed setting 
+const uint8_t MED = 70;           // medium speed setting 
 
-const uint8_t FAST = 225;       // fast speed setting 
+const uint8_t FAST = 225;         // fast speed setting 
 
 
 
 
  // each shaft roation corresponds to ~ 3/4 of a wheel rotation, where the wheel diameter is ~ 7.75 inches
  // Wheel circumference is ~ 63.5 cm, meaining each shaft rotation is ~ 47.625 cm => 48 cm ? 
- const double Rot_dist = 21.43125; // liner distnace travled in one shaft rotation                                                                         
+ const double Rot_dist = 21.43125;  // liner distnace travled in one shaft rotation                                                                         
 
- const double trackWidth = 15;    // track width of mower in cm ( guessed at 15 cm for now) 
+ const double trackWidth = 15;      // track width of mower in cm ( guessed at 15 cm for now) 
 
  // 90 deg turn rotation distance for left wheel 
 
- const double TurnDist = 79.8;    // rotation of left wheel needed to compleate 90 deg turn                    // check this too 
+ const double TurnDist = 79.8;      // rotation of left wheel needed to compleate 90 deg turn                  
  //******************************************************************************************************// 
 
  
   // Nav variables 
 
-  bool correction = false;         // set to true to correct wheel speed to go straight. If things fuck up, set to false, not used due to issues with left shaft encoder 
+  bool correction = false;        // set to true to correct wheel speed to go straight. If things fuck up, set to false, not used due to issues with left shaft encoder 
 
-  uint8_t med_L = MED;      // holds adjusted speed for left wheel in go straight function as above 
+  uint8_t med_L = MED;            // holds adjusted speed for left wheel in go straight function as above 
 
-  uint8_t med_R = MED;      // holds adjusted speed for right wheel in go straight function as above 
+  uint8_t med_R = MED;            // holds adjusted speed for right wheel in go straight function as above 
 
-  int ind = 1;              // incrementally boosts reversing power in stop function 
+  int ind = 1;                    // incrementally boosts reversing power in stop function 
 
-  bool stopped = false;     // tracks if we have stopped in stopping function 
+  bool stopped = false;           // tracks if we have stopped in stopping function 
 
-  int LegNum = 0;     // tracks what leg we are on 
+  int LegNum = 0;                 // tracks what leg we are on 
 
-  int LoopNum = 0;    // Tracks which loop around the yard we're on
+  int LoopNum = 0;                // Tracks which loop around the yard we're on
 
-  int L_last = 0;   // hold last encode value on channel A, so check if we've actully stopped 
+  int L_last = 0;                 // hold last encode value on channel A, so check if we've actully stopped 
 
-  int R_last = 0;   // same as above, but for right. both used in stop function 
+  int R_last = 0;                 // same as above, but for right. both used in stop function 
 
-  bool evading = false; // bool to see if we are currenlty evading an obstalce 
+  bool evading = false;           // bool to see if we are currenlty evading an obstalce 
 
-  bool OBSTACLE = false; // used in ISR, ISR removed as it was causing isssues due to miss triggeres from the PIC 
+  bool OBSTACLE = false;          // used in ISR, ISR removed as it was causing isssues due to miss triggeres from the PIC 
 
 /*********************************************************************************/ 
 // outside box width 
@@ -262,7 +260,7 @@ float Gyro_Cal = 0.0;     // gyro calibration dummy var not used as GYRO sensor 
 // ISRS 
 
 
-// ISR m.lesser 4/3/21
+
 //////////////////////////////////////////////
 // LEFT SE NOT TRIGGERING 
 /////////////////////////////////////////////
@@ -270,20 +268,16 @@ float Gyro_Cal = 0.0;     // gyro calibration dummy var not used as GYRO sensor 
 
 // left indicator channle 
 void IRAM_ATTR L_SE_ISR() {     
-  L_SE_CNT_GLOB ++; 
-  
-  
+  L_SE_CNT_GLOB ++;  
 }
 
 // ISR to incriment right SE cnt 
 void IRAM_ATTR R_SE_ISR() {
   R_SE_CNT_GLOB++;
- 
 }
 // right channel A 
 void IRAM_ATTR R_A_ISR() {
-  R_A_GLOB++;
-  
+  R_A_GLOB++; 
 }
 
 // left channel A 
@@ -406,23 +400,23 @@ void GoStraight(int Rotations)
       { 
         if(L_A_GLOB > R_A_GLOB)                 // left wheel faster than right 
         { 
-          med_L = med_L - 1;            // decreasing left wheel PWM by 1          
+          med_L = med_L - 1;                    // decreasing left wheel PWM by 1          
           ledcWrite(1,med_L);  
-          delay(50);                    // giving right wheel time to catch up 
+          delay(50);                            // giving right wheel time to catch up 
           
         }
         else                                    // right wheel faster than left 
         { 
-          med_R = med_R - 1;            // decreasing right wheel PWM by 1           
+          med_R = med_R - 1;                    // decreasing right wheel PWM by 1           
           ledcWrite(2,med_R); 
-          delay(50);                    // giving left wheel time to catch up        
+          delay(50);                            // giving left wheel time to catch up        
           
         }
       }
     }
     if ((digitalRead(O_ALERT) == HIGH) & (!evading))  // if PIC reports an obstacle 
     { 
-      Clear_Obstacle(); // call evation function 
+      Clear_Obstacle();                               // call evasion function 
     }
     
     delay(10);    // used as NOP instruction here I feel like i should take this out, but I'm leaving it here cause that's what i last ran at 
@@ -455,17 +449,17 @@ void Stop()
 
   attachInterrupt(Pin_RA, R_A_ISR, RISING);
 
-  R_A_GLOB = 0;   // resetting ch a encoder counts  
+  R_A_GLOB = 0;             // resetting ch a encoder counts  
 
   L_A_GLOB = 0; 
 
   
 
-  L_last = 0;   // hold last encode value on channel A, so check if we've actully stopped 
+  L_last = 0;               // hold last encode value on channel A, so check if we've actully stopped 
 
   R_last = 0; 
 
-  stopped = false;      // resetting bool 
+  stopped = false;          // resetting bool 
   
   // stops mower 
   // breaking by applying low power reverse 
@@ -476,7 +470,7 @@ void Stop()
 
    
 
-  ind = 1;              // incrementally boosts reversing power 
+  ind = 1;                  // incrementally boosts reversing power 
 
   while((!stopped) & (ind <= 15)) // 
   { 
@@ -692,7 +686,7 @@ void Clear_Obstacle(void)
  
     
     
-    //OBSTACLE = false;     // we have cleared the obstacle, and can set it's bool to false  
+    //OBSTACLE = false;     // we have cleared the obstacle, and can set it's bool to false  using direct pin read for now 
   }
   else 
   { 
@@ -840,7 +834,7 @@ void Turn()
 //******************************************************************************************************// 
 //******************************************************************************************************// 
 //******************************************************************************************************// 
-// IO setup by JS 
+// IO setup by JP 
 
 
 
@@ -1125,9 +1119,9 @@ void setup() {
 
     ledcSetup(2,5000,8);//( R_Channel, freq, resolution); JS 
 
-    ledcSetup(3,5000,8);// 
+    ledcSetup(3,5000,8);// right reverse 
 
-    ledcSetup(4,5000,8);//
+    ledcSetup(4,5000,8);// right forward 
 
 
     // Right SE indicator channel 
