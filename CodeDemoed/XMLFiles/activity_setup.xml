@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical"
+    tools:context=".SetupActivity">
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/tvBattery"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="12dp"
+        android:textAppearance="?textAppearanceHeadline6"
+        android:textSize="16sp"
+        tools:text="Battery: 1000mAh" />
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/tvEstimateTime"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/tvBattery"
+        android:padding="12dp"
+        android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6"
+        android:textSize="16sp"
+        tools:text="Estimated time remain: 9h30" />
+
+    <LinearLayout
+        android:id="@+id/btnDefault"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/tvEstimateTime"
+        android:orientation="vertical"
+        android:padding="12dp">
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/tvDefault"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="?textAppearanceHeadline6"
+            android:textSize="16sp"
+            android:text="Default lawn"
+            tools:text="Default lawn" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/tvDefaultValue"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="?textAppearanceBody1"
+            android:textSize="16sp"
+            tools:text="abc" />
+    </LinearLayout>
+
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnStart"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/btnDefault"
+        android:layout_margin="12dp"
+        android:text="Start" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnStop"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/btnDefault"
+        android:layout_margin="12dp"
+        android:layout_toEndOf="@id/btnStart"
+        android:text="Stop" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnHome"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/btnDefault"
+        android:layout_margin="12dp"
+        android:layout_toEndOf="@id/btnStop"
+        android:text="Go Home" />
+
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvLawn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/btnStart"
+        android:orientation="vertical"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        app:reverseLayout="false"
+        tools:listitem="@layout/holder_lawn" />
+
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+        android:id="@+id/btnAdd"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="12dp"
+        android:text="Add Lawn"
+        android:textColor="@android:color/white"
+        app:backgroundTint="?colorAccent"
+        app:icon="@drawable/ic_add"
+        app:iconTint="@android:color/white"
+        app:tint="@android:color/white" />
+</RelativeLayout>
