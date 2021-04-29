@@ -2,10 +2,10 @@ README for ESP-32 Demo Code
 Written by Jonathan and Max 
 
 Summary: 
-The ESP32 controlls naviagtion, and interfaces with the User via WIFI. Jonathan wrote the WIFI commponets, Max wrote the navigation componet. 
+The ESP32 controls navigation, and interfaces with the User via WIFI. Jonathan wrote the WIFI commponets, Max wrote the navigation componet. 
 Earlier versions of navigation code were written by Josh, see additional code/ JOSH directory for more information 
 //*****************************************************************************************************************************************************************************//
-***NAVIGATION SUMMARY*** : 
+***NAVIGATION SUMMARY*** (Max): 
 Navigation relies on the distanced of the outside legs of the box to be mowed, assuming all internal angles are 90 degrees. 
 it tracks the distanced moved using shaft encoders on both wheels. When it is alerted of an obstacle, it will evade that obstacle and return to the orignla path 
 Comments: 
@@ -30,4 +30,46 @@ The code also controlls the blade motor, which is started at the beginngin, deac
 The NAv function is controlled by a BOOL set by the user, and allows the user to start/stop the mover via the app. see User interface for detail. 
 
 //*****************************************************************************************************************************************************************************//
-USER INTERFACE SUMMARY: 
+***WiFi SUMMARY*** (Jonathan): 
+disclaimer: 
+{
+My first versions of the code were for two seperate ESP32s, WiFi and Navigation. (*SEE Additional Code-Not used during demo to see files*)
+For the WiFi ESP, the functions were:    
+    -Connect to Wifi for Firebase Server & Connects to Nav ESP
+    -Receive coordinates & start_status from Firebase Server
+    -Recieve battery information/statistics from Nav ESP
+    -Send battery information/statistics to firebase server
+    -Send coordinates & start_status to NAV ESP
+    
+ For the Nav_MCU, the functions were:
+    -Create WiFi Network so WiFi MCU can connect to it
+    -Send battery information/statistics to WiFi ESP
+    -Recieve coordinates & start_status from WiFi ESP
+
+I tested both of the old files/ESPs without the navigation code to see if they would execute all functions and communicate effectively and there seemed to be no issue. Once 
+I added Josh's old navigation code, the variables would send to each other but the navigation was not working. There were many errors and bugs that led to a restarting issue 
+with the Navigation ESP.
+
+To fix this problem, Max ended up rewriting the Navigation Code and I decided to combine all the code into one ESP to have one less step of the line of communication with 
+the variables. This fixed the problem.
+}
+    The functions for the final code:
+    -Connects to Wifi for Firebase Server 
+    -Receives coordinates,start_status from Firebase Server in realtime
+    -Sends battery information/statistics to Firebase Server in realtime
+    -Converts 4 coordinates into Distances
+    -Navigates the Mower (explained in detail above in navigation section)
+    
+The ESP32 was set up in STA Mode to connect to the WiFi network. In the final code/demo, we ended up using my iphone as a hotspot to connect to. In the code you can see the network 
+name as "iPhone" and the password as "jonathan". By connecting to WiFi, I were able to to receive the start_status (Start & Stop) boolean and the longitude and latitude 
+from the coordinates selected in the App in realtime as well as send battery status/statistics to the server in realtime. The ESP checked the the server for these variables every 
+110 ms. The hardest part was finding the correct format from the Firebase Server & JSN file to display all of these variables correctly which is a lot of my code.
+
+I added a while loop to the navigation code so that when start_status is 0, the mower will stop and when it is not, it will start.
+
+I also added code to convert the coordinates (8 total variables) longitude and latitude into distances for the outside legs of the navigation using the haversine formula.
+
+Implementation
+The WiFi part of the code worked fine without any issues.
+
+
